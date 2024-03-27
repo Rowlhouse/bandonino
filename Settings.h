@@ -28,9 +28,9 @@ struct Settings {
   byte midiMax = 127;
 
   // Shape the pressure response using attack params. Each is interpreted as a fraction out of 32 (i.e. 16 is 0.5)
-  int attack1 = 64;  // output when pressure = 32
-  int attack2 = 96;  // output when pressure = 64
-  int attack3 = 110; // output when pressure = 96
+  int attack1 = 56;  // output when pressure = 32
+  int attack2 = 80;  // output when pressure = 64
+  int attack3 = 104; // output when pressure = 96
   // 127 will turn into 127
 
   // Call this to limit the range of midi notes we traverse after changing the layout
