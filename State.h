@@ -36,6 +36,7 @@ struct State {
   int modifiedPressure;
 
   int rotaryEncoderPosition = 0;
+  uint32_t loopStartTimeMillis = 0;
 };
 
 extern BigState bigState;

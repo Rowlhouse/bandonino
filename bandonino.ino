@@ -1,10 +1,9 @@
+// SSD1306Ascii v1.3.5
+#include <SSD1306Ascii.h>
+#include <SSD1306AsciiWire.h>
+
 // https://www.mathertel.de/Arduino/RotaryEncoderLibrary.aspx
 #include <RotaryEncoder.h>
-
-// https://github.com/datasith/Ai_Ardulib_SSD1306
-// Note that you need to add a "return true" to fix the compilation warning!
-#include <Wire.h>
-#include <ACROBOTIC_SSD1306.h>
 
 // https://github.com/bogde/HX711
 #include <HX711.h>
@@ -34,6 +33,12 @@ bool flashLED = true;
 bool showRot = true;
 
 bool showRawLoadCellReading = false;
+
+// OLED I2C address and library configuration
+#define I2C_ADDRESS 0x3C
+SSD1306AsciiWire oled;
+// Font is 5 wide, but have a space
+byte charWidth = 6;
 
 //====================================================================================================
 // Rotary encoder pins and library configuration
@@ -79,11 +84,11 @@ byte loopLeft[] = { B00000, B00000, B00010, B00100, B00010, B00000, B00000, B000
 byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00000 };    // Define right side of loop track active glyph in binary to send to the LCD
 
 //====================================================================================================
-void scrollInText(int row, int col, const char* text, int ms) {
+void scrollInText(int col, int row, const char* text, int ms) {
   const int textLen = strlen(text);
-  for (int i = 0; i != textLen; ++i) {
-    oled.setTextXY(row, col + textLen - i - 1);
-    oled.putString(text);
+  for (int i = textLen * charWidth; i-- != 0; ) {
+    oled.setCursor(col * charWidth + i, row);
+    oled.print(text);
     delay(ms);
   }
 }
@@ -92,79 +97,20 @@ void scrollInText(int row, int col, const char* text, int ms) {
 // Display is 128x64 - so 16x8 characters
 void setupOLED() {
   Wire.begin();
-  oled.init();
-  oled.clearDisplay();
+  Wire.setClock(400000L);                    // Fast mode
+  oled.begin(&Adafruit128x64, I2C_ADDRESS);  // OLED type and address
+  oled.setFont(font5x7);                     // Set the font type
 
-#if 0
-  oled.setTextXY(0, 0);  // Set cursor position, start of line 0
-  oled.putString("Band.in0");
-  oled.setTextXY(1, 0);  // Set cursor position, start of line 1
-  oled.putString("The Rowlhouse");
-  oled.setTextXY(2, 0);  // Set cursor position, start of line 2
-  oled.putString("Oxford,");
-  oled.setTextXY(2, 10);  // Set cursor position, line 2 10th character
-  oled.putString("UK");
-#endif
-
-  scrollInText(0, 0, "Bandon.ino ", 30);
-  scrollInText(1, 0, "Danny Chapman ", 30);
-
+  oled.clear();
+  scrollInText(0, 0, "Bandon.ino ", 3);
+  scrollInText(0, 1, "Danny Chapman ", 3);
   delay(1000);
-  oled.clearDisplay();
-
-#if 0
-  // LCD Startup Animation (Strobe letters left to right before revealing full text with added delay to mitigate slow LCD refresh)
-  for (int i = 0; i < 16; i = i + 1) {
-    lcd.setCursor(i - 1, 0);             // Set cursor to prior column
-    lcd.print(" ");                      // Blank this column
-    delay(15);                           // Delay 20 milliseconds
-    lcd.setCursor(i, 0);                 // Set cursor to current column
-    lcd.print(startupAnimation[i]);      // Print the current letter in the array
-    delay(15);                           // Delay 20 milliseconds
-    lcd.setCursor(i + 1, 0);             // Set cursor to the upcoming column
-    lcd.print(startupAnimation[i + 1]);  // Print the next letter in the array
-    delay(15);                           // Delay 20 milliseconds
-    lcd.setCursor(i + 2, 0);             // Set cursor to the upcoming column
-    lcd.print(startupAnimation[i + 2]);  // Print the next letter in the array
-    delay(15);                           // Delay 20 milliseconds and loop incrementing 1 position
-  }
-  lcd.setCursor(0, 0);            // Set cursor to column 0 line 0
-  lcd.print("KOOP Instruments");  // Print to LCD
-  lcd.setCursor(0, 1);            // Set cursor to column 0 line 1
-  lcd.print("Melodicade v4.01");  // Print to LCD
-  delay(1250);                    // Delay to allow logo to be displayed
-  lcd.clear();                    // Clear LCD
-  delay(250);                     // Wait for screen to fade
-
-  // LCD Update Top Menu
-  lcd.setCursor(0, 0);
-  lcd.print("LP M R PRG CH OC");
-  // LCD Update Looper Disabled
-  lcd.setCursor(0, 1);
-  lcd.print("--");
-  // LCD Update Normal Mode Selected
-  lcd.setCursor(3, 1);
-  lcd.print("N");
-  // LCD Update Reverb Disabled
-  lcd.setCursor(5, 1);
-  lcd.print("0");
-  // LCD Update Default MIDI Program
-  lcd.setCursor(7, 1);
-  lcd.print("001");
-  // LCD Update Default MIDI Channel
-  lcd.setCursor(11, 1);
-  lcd.print("01");
-  // LCD Update Default Octave
-  lcd.setCursor(14, 1);
-  lcd.print(" 0");
-#endif
+  oled.clear();
 }
 
 //====================================================================================================
 void setup() {
-
   setupOLED();
-
   Serial.begin(38400);
 
   SetNoteLayout(LAYOUT_MANOURY, settings);
@@ -197,20 +143,16 @@ void setup() {
 
 //====================================================================================================
 void displayPlayingNotes(byte playingNotes[], int row) {
-  static char text[16];
   int col = 0;
   for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
     if (playingNotes[i]) {
-      oled.setTextXY(row, col);
-      int s = sprintf(text, "%s ", midiNoteNames[i]);
-      oled.putString(text);
-      col += s;
+      oled.setCursor(col * charWidth, row);
+      col += oled.printf("%s ", midiNoteNames[i]);
     }
   }
   if (col < 15) {
-    oled.setTextXY(row, col);
-    static char blankLine[] = "                ";
-    oled.putString(blankLine);
+    oled.setCursor(col * charWidth, row);
+    oled.print("                ");
   }
 }
 
@@ -218,11 +160,6 @@ void displayPlayingNotes(byte playingNotes[], int row) {
 void displayAllPlayingNotes() {
   displayPlayingNotes(bigState.playingNotesLeft, 3);
   displayPlayingNotes(bigState.playingNotesRight, 5);
-
-  oled.setTextXY(6, 0);
-  static char text[16];
-  sprintf(text, "P %3d -> %3d %d", state.absPressure, state.modifiedPressure, state.rotaryEncoderPosition);
-  oled.putString(text);
 }
 
 //====================================================================================================
@@ -234,6 +171,7 @@ void handleRotaryEncoder() {
 //====================================================================================================
 void loop() {
   prevState = state;
+  state.loopStartTimeMillis = millis();
 
   readAllKeys();
 
@@ -260,9 +198,13 @@ void loop() {
 
   playAllButtons();
 
-  if (state.rotaryEncoderPosition % 2) {
-    displayAllPlayingNotes();
-  }
+  displayAllPlayingNotes();
+
+  // extra info
+  oled.setCursor(0, 6);
+  oled.printf("P %3d -> %3d %d ", state.absPressure, state.modifiedPressure, state.rotaryEncoderPosition);
+  oled.setCursor(0, 7);
+  oled.printf("%5.1f  ", 1000.0f / (state.loopStartTimeMillis - prevState.loopStartTimeMillis));
 
   if (runHardwareTest)
     hardwareTest();
