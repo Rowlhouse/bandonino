@@ -6,32 +6,27 @@
 #include <wiring.h>
 
 struct Settings {
-  bool useBellows = true;
-  const int pressureGain = 8;
+  int noteLayout = NOTELAYOUTTYPE_MANOURY;
+  int forceBellows = 0; // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
+  float pressureGain = 0.5f;
 
-  const uint32_t debounceTime = 10;  // milliseconds
+  uint32_t debounceTime = 10;  // milliseconds
 
-  const int midiChannelLeft = 1;
-  const int midiChannelRight = 2;
+  int midiChannelLeft = 1;
+  int midiChannelRight = 2;
 
   // percentages between -100 and 100
   int panLeft = -50;
   int panRight = 50;
 
-  // The actual note layout
-  const byte* noteLayoutLeftOpen = nullptr;
-  const byte* noteLayoutRightOpen = nullptr;
-  const byte* noteLayoutLeftClose = nullptr;
-  const byte* noteLayoutRightClose = nullptr;
+  // Shape the pressure response using attack params. 
+  float attack25 = 0.25;  // output when pressure = 25%
+  float attack50 = 0.50;  // output when pressure = 50%
+  float attack75 = 0.75;  // output when pressure = 75%
 
+  // Things below here are updated automatically
   byte midiMin = 0;
   byte midiMax = 127;
-
-  // Shape the pressure response using attack params. Each is interpreted as a fraction out of 32 (i.e. 16 is 0.5)
-  int attack1 = 56;  // output when pressure = 32
-  int attack2 = 80;  // output when pressure = 64
-  int attack3 = 104; // output when pressure = 96
-  // 127 will turn into 127
 
   // Call this to limit the range of midi notes we traverse after changing the layout
   void updateMIDIRange();

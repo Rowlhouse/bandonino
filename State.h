@@ -2,11 +2,20 @@
 #define STATE_H
 
 #include "NoteLayouts.h"
+#include "PinInputs.h"
 
 #include <wiring.h>
 
+struct Settings;
+
 // Big state - don't copy
 struct BigState {
+  // The actual note layout
+  const byte* noteLayoutLeftOpen = nullptr;
+  const byte* noteLayoutRightOpen = nullptr;
+  const byte* noteLayoutLeftClose = nullptr;
+  const byte* noteLayoutRightClose = nullptr;
+
   byte activeKeysLeft[PinInputs::keyCountLeft];
   byte activeKeysRight[PinInputs::keyCountRight];
 
@@ -31,11 +40,14 @@ struct State {
   long loadReading;
 
   // Pressures - converted using the gain
-  int pressure;
-  int absPressure;
-  int modifiedPressure;
+  float pressure = 0.0f;
+  float absPressure = 0.0f; // clamped to 0 and 1
+  float modifiedPressure = 0.0f; // clamped to 0 and 1
+
+  int midiVolume = 0; // scaled to 0-127
 
   int rotaryEncoderPosition = 0;
+  bool rotaryEncoderPressed = false;
   uint32_t loopStartTimeMillis = 0;
 };
 

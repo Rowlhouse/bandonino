@@ -1,7 +1,3 @@
-// SSD1306Ascii v1.3.5
-#include <SSD1306Ascii.h>
-#include <SSD1306AsciiWire.h>
-
 // https://www.mathertel.de/Arduino/RotaryEncoderLibrary.aspx
 #include <RotaryEncoder.h>
 
@@ -30,15 +26,10 @@ bool runHardwareTest = true;
 bool showKeys = false;
 bool showBellows = false;
 bool flashLED = true;
-bool showRot = true;
+bool showRot = false;
+bool showPlayingNotes = false;
 
 bool showRawLoadCellReading = false;
-
-// OLED I2C address and library configuration
-#define I2C_ADDRESS 0x3C
-SSD1306AsciiWire oled;
-// Font is 5 wide, but have a space
-byte charWidth = 6;
 
 //====================================================================================================
 // Rotary encoder pins and library configuration
@@ -48,18 +39,11 @@ RotaryEncoder rotaryEncoder(A9, A8, RotaryEncoder::LatchMode::FOUR3);
 const byte rotaryEncoderButtonPin = 17;
 
 //====================================================================================================
-
-#define USE_LOADCELL
-#ifdef USE_LOADCELL
 HX711 loadcell;
-#endif
-
 const long LOADCELL_OFFSET = 50682624;
 const long LOADCELL_DIVIDER = 5895655;
 
-
 unsigned long lastHardwareTestPrintTime;  // Rate limit printing of hardwareTest() info to serial monitor
-
 
 //====================================================================================================
 void initInputPins(const byte pins[], byte pinCount, uint8_t mode) {
@@ -84,36 +68,10 @@ byte loopLeft[] = { B00000, B00000, B00010, B00100, B00010, B00000, B00000, B000
 byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00000 };    // Define right side of loop track active glyph in binary to send to the LCD
 
 //====================================================================================================
-void scrollInText(int col, int row, const char* text, int ms) {
-  const int textLen = strlen(text);
-  for (int i = textLen * charWidth; i-- != 0; ) {
-    oled.setCursor(col * charWidth + i, row);
-    oled.print(text);
-    delay(ms);
-  }
-}
-
-//====================================================================================================
-// Display is 128x64 - so 16x8 characters
-void setupOLED() {
-  Wire.begin();
-  Wire.setClock(400000L);                    // Fast mode
-  oled.begin(&Adafruit128x64, I2C_ADDRESS);  // OLED type and address
-  oled.setFont(font5x7);                     // Set the font type
-
-  oled.clear();
-  scrollInText(0, 0, "Bandon.ino ", 3);
-  scrollInText(0, 1, "Danny Chapman ", 3);
-  delay(1000);
-  oled.clear();
-}
-
-//====================================================================================================
 void setup() {
-  setupOLED();
   Serial.begin(38400);
 
-  SetNoteLayout(LAYOUT_MANOURY, settings);
+  SyncNoteLayout();
 
   // Set pin modes - initially all LOW
   initInputPins(PinInputs::columnPinsLeft, PinInputs::columnCountLeft, INPUT);
@@ -127,45 +85,24 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(rotaryEncoderButtonPin, INPUT_PULLUP);
 
-#ifdef USE_LOADCELL
-  if (settings.useBellows) {
-    // Initialise the loadcell
-    loadcell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  // Initialise the loadcell
+  loadcell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
 
-    while (!loadcell.is_ready()) {
-    }
-    //Zero scale
-    state.zeroLoadReading = loadcell.read();
-    state.pressure = 0;
+  while (!loadcell.is_ready()) {
   }
-#endif
-}
+  //Zero scale
+  state.zeroLoadReading = loadcell.read();
+  state.pressure = 0;
 
-//====================================================================================================
-void displayPlayingNotes(byte playingNotes[], int row) {
-  int col = 0;
-  for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
-    if (playingNotes[i]) {
-      oled.setCursor(col * charWidth, row);
-      col += oled.printf("%s ", midiNoteNames[i]);
-    }
-  }
-  if (col < 15) {
-    oled.setCursor(col * charWidth, row);
-    oled.print("                ");
-  }
-}
-
-//====================================================================================================
-void displayAllPlayingNotes() {
-  displayPlayingNotes(bigState.playingNotesLeft, 3);
-  displayPlayingNotes(bigState.playingNotesRight, 5);
+  initMenu();
 }
 
 //====================================================================================================
 void handleRotaryEncoder() {
   rotaryEncoder.tick();
   state.rotaryEncoderPosition = rotaryEncoder.getPosition();
+
+  state.rotaryEncoderPressed = !digitalRead(rotaryEncoderButtonPin);
 }
 
 //====================================================================================================
@@ -177,34 +114,23 @@ void loop() {
 
   adjustPan();
 
-  int col = 5;
-  int row = 5;
-  int iKey = INDEX_RIGHT(row, col);
-  if (bigState.activeKeysRight[iKey]) {
-    Serial.println("Toggling bellows");
-    delay(1000);
-    settings.useBellows = !settings.useBellows;
-  }
-
-  if (settings.useBellows) {
+  if (settings.forceBellows == 0) {
     readPressure();
     handleBellows();
   } else {
-    usbMIDI.sendControlChange(0x07, 127, settings.midiChannelLeft);
-    usbMIDI.sendControlChange(0x07, 127, settings.midiChannelRight);
+    state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
+    state.midiVolume = 127;
+    if (state.midiVolume != prevState.midiVolume) {
+      usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelLeft);
+      usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelRight);
+    }
   }
 
   handleRotaryEncoder();
 
   playAllButtons();
 
-  displayAllPlayingNotes();
-
-  // extra info
-  oled.setCursor(0, 6);
-  oled.printf("P %3d -> %3d %d ", state.absPressure, state.modifiedPressure, state.rotaryEncoderPosition);
-  oled.setCursor(0, 7);
-  oled.printf("%5.1f  ", 1000.0f / (state.loopStartTimeMillis - prevState.loopStartTimeMillis));
+  updateMenu(settings, state);
 
   if (runHardwareTest)
     hardwareTest();
@@ -215,7 +141,6 @@ void loop() {
 
 //====================================================================================================
 void readPressure() {
-#ifdef USE_LOADCELL
   while (!loadcell.is_ready()) {
   }
   state.loadReading = loadcell.read();
@@ -228,33 +153,26 @@ void readPressure() {
     delay(1000);
     state.zeroLoadReading = state.loadReading;
   }
-
-  state.pressure = ((state.loadReading - state.zeroLoadReading) * settings.pressureGain) / 100000;
-
-  // Serial.println("Zero reading, load reading, current pressure");
-  // Serial.println(state.zeroLoadReading);
-  if (showRawLoadCellReading) {
-    Serial.printf("Current load reading %d\n", state.loadReading);
-  }
-  // Serial.println(state.loadReading);
+  state.pressure = -((state.loadReading - state.zeroLoadReading) * settings.pressureGain) / 1000000.0f;
   // Serial.println(state.pressure);
-
-#endif
 }
 
 //====================================================================================================
 void handleBellows() {
-  if (state.pressure == 0) {        //Bellows stopped
+  if (state.midiVolume == 0 || state.pressure == 0) {  //Bellows stopped
+    state.bellowsOpening = 0;
     if (prevState.pressure != 0) {  //Bellows were not previously stopped
       stopAllNotes();               //All Notes Off
     }
-  } else {                            //Bellows not stopped
-    if (state.pressure < 0) {         //Pull
+  } else {                     //Bellows not stopped
+    if (state.pressure < 0) {  //Pull
+      state.bellowsOpening = 1;
       if (prevState.pressure >= 0) {  //Pull and Previously Push or stopped
         stopAllNotes();               //All Notes Off
       }
     }
-    if (state.pressure > 0) {         //Push
+    if (state.pressure > 0) {  //Push
+      state.bellowsOpening = -1;
       if (prevState.pressure <= 0) {  //Push and Previously Pull or stopped
         stopAllNotes();               //All Notes Off
       }
@@ -262,31 +180,23 @@ void handleBellows() {
   }
 
   // Send the pressure to modulate volume
-  state.absPressure = abs(state.pressure);  //Absolute Channel Pressure
-  if (state.absPressure > 0x7F) {
-    state.absPressure = 0x7F;
+  state.absPressure = std::min(fabsf(state.pressure), 1.0f);  //Absolute Channel Pressure
+
+  if (state.absPressure < 0.25f) {
+    state.modifiedPressure = (state.absPressure * settings.attack25) / 0.25f;
+  } else if (state.absPressure < 0.5f) {
+    state.modifiedPressure = settings.attack25 + ((state.absPressure - 0.25f) * (settings.attack50 - settings.attack25)) / 0.25f;
+  } else if (state.absPressure < 0.75f) {
+    state.modifiedPressure = settings.attack50 + ((state.absPressure - 0.5f) * (settings.attack75 - settings.attack50)) / 0.25f;
+  } else {
+    state.modifiedPressure = settings.attack75 + ((state.absPressure - 0.75f) * (1.0f - settings.attack75)) / 0.25f;
   }
 
-  if (state.absPressure < 32) {
-    state.modifiedPressure = (state.absPressure * settings.attack1) / 32;
-  }
-  if (state.absPressure > 31) {
-    if (state.absPressure < 64) {
-      state.modifiedPressure = settings.attack1 + ((state.absPressure - 31) * (settings.attack2 - settings.attack1)) / 32;
-    }
-  }
-  if (state.absPressure > 63) {
-    if (state.absPressure < 95) {
-      state.modifiedPressure = settings.attack2 + ((state.absPressure - 63) * (settings.attack3 - settings.attack2)) / 32;
-    }
-  }
-  if (state.absPressure > 94) {
-    state.modifiedPressure = settings.attack3 + ((state.absPressure - 95) * (127 - settings.attack3)) / 32;
-  }
+  state.midiVolume = std::min((int)(128 * state.modifiedPressure), 127);
 
-  if (state.modifiedPressure != prevState.modifiedPressure) {
-    usbMIDI.sendControlChange(0x07, state.modifiedPressure, settings.midiChannelLeft);
-    usbMIDI.sendControlChange(0x07, state.modifiedPressure, settings.midiChannelRight);
+  if (state.midiVolume != prevState.midiVolume) {
+    usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelLeft);
+    usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelRight);
   }
 }
 
@@ -349,6 +259,8 @@ void playButtons(const byte activeKeys[], byte previousActiveKeys[], const int k
         playNote(noteLayoutOpen[iKey], 0x7f, midiChannel, playingNotes);
       else if (state.bellowsOpening < 0)
         playNote(noteLayoutClose[iKey], 0x7f, midiChannel, playingNotes);
+      else
+        continue;
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
       // Stop playing
       if (state.bellowsOpening > 0)
@@ -363,9 +275,9 @@ void playButtons(const byte activeKeys[], byte previousActiveKeys[], const int k
 //====================================================================================================
 void playAllButtons() {
   playButtons(bigState.activeKeysLeft, bigState.previousActiveKeysLeft, PinInputs::keyCountLeft,
-              settings.midiChannelLeft, settings.noteLayoutLeftOpen, settings.noteLayoutLeftClose, bigState.playingNotesLeft);
+              settings.midiChannelLeft, bigState.noteLayoutLeftOpen, bigState.noteLayoutLeftClose, bigState.playingNotesLeft);
   playButtons(bigState.activeKeysRight, bigState.previousActiveKeysRight, PinInputs::keyCountRight,
-              settings.midiChannelRight, settings.noteLayoutRightOpen, settings.noteLayoutRightClose, bigState.playingNotesRight);
+              settings.midiChannelRight, bigState.noteLayoutRightOpen, bigState.noteLayoutRightClose, bigState.playingNotesRight);
 }
 
 //====================================================================================================
@@ -439,6 +351,7 @@ void hardwareTest() {
     Serial.println("Bellows");
     Serial.println(state.pressure);
     Serial.println(state.modifiedPressure);
+    Serial.println(state.bellowsOpening);
   }
 
   if (showKeys) {
@@ -448,7 +361,7 @@ void hardwareTest() {
         int iKey = INDEX_LEFT(i, j);
         Serial.print(bigState.activeKeysLeft[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? settings.noteLayoutLeftOpen[iKey] : settings.noteLayoutLeftClose[iKey]);
+        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayoutLeftOpen[iKey] : bigState.noteLayoutLeftClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }
@@ -460,11 +373,26 @@ void hardwareTest() {
         int iKey = INDEX_RIGHT(i, j);
         Serial.print(bigState.activeKeysRight[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? settings.noteLayoutRightOpen[iKey] : settings.noteLayoutRightClose[iKey]);
+        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayoutRightOpen[iKey] : bigState.noteLayoutRightClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }
       Serial.println();
+    }
+    Serial.println();
+  }
+
+  if (showPlayingNotes) {
+    Serial.print("Playing notes left: ");
+    for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
+      if (bigState.playingNotesLeft[i])
+        Serial.printf("%s ", midiNoteNames[i]);
+    }
+    Serial.println();
+    Serial.print("Playing notes right: ");
+    for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
+      if (bigState.playingNotesRight[i])
+        Serial.printf("%s ", midiNoteNames[i]);
     }
     Serial.println();
   }

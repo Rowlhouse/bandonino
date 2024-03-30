@@ -3,6 +3,12 @@
 #include "NoteNames.h"
 #include "PinInputs.h"
 #include "Settings.h"
+#include "State.h"
+
+const char* gNoteLayouts[] = {
+  "Manoury"
+};
+
 
 // On the left
 // Layout flipped vertically
@@ -32,12 +38,17 @@ const byte manouryLayoutRightOpen[PinInputs::keyCountRight] = {
 const byte* manouryLayoutLeftClose = manouryLayoutLeftOpen;
 const byte* manouryLayoutRightClose = manouryLayoutRightOpen;
 
-void SetNoteLayout(NoteLayoutType type, Settings& settings)
-{
-  settings.noteLayoutLeftClose = manouryLayoutLeftClose;
-  settings.noteLayoutLeftOpen = manouryLayoutLeftOpen;
-  settings.noteLayoutRightClose = manouryLayoutRightClose;
-  settings.noteLayoutRightOpen = manouryLayoutRightOpen;
-
+//====================================================================================================
+void SyncNoteLayout() {
+  switch (settings.noteLayout) {
+    case NOTELAYOUTTYPE_MANOURY:
+      bigState.noteLayoutLeftClose = manouryLayoutLeftClose;
+      bigState.noteLayoutLeftOpen = manouryLayoutLeftOpen;
+      bigState.noteLayoutRightClose = manouryLayoutRightClose;
+      bigState.noteLayoutRightOpen = manouryLayoutRightOpen;
+      break;
+    default:
+      break;
+  }
   settings.updateMIDIRange();
 }

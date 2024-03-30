@@ -4,10 +4,14 @@
 struct Settings;
 
 enum NoteLayoutType {
-  LAYOUT_MANOURY,
-  LAYOUT_MAX
+  NOTELAYOUTTYPE_MANOURY,
+  NOTELAYOUTTYPE_NUM,
+  NOTELAYOUTTYPE_MAX = NOTELAYOUTTYPE_NUM - 1
 };
 
-void SetNoteLayout(NoteLayoutType type, Settings& settings);
+extern const char* gNoteLayouts[];
+
+// This updates the state to have the note arrays to match what is in settings
+void SyncNoteLayout();
 
 #endif
