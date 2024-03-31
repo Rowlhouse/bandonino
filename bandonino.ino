@@ -103,9 +103,8 @@ void readRotaryEncoder() {
 
 //====================================================================================================
 void loop() {
-  state.loopStartTimeMillis = millis();
-
   prevState = state;
+  state.loopStartTimeMillis = millis();
 
   // Inputs needs to be processed before the menus
   readRotaryEncoder();
@@ -143,13 +142,18 @@ void readPressure() {
   }
   state.loadReading = loadcell.read();
 
-  int col = 4;
-  int row = 6;
+  int col = 0;
+  int row = 2;
   int iKey = INDEX_RIGHT(row, col);
   if (bigState.activeKeysRight[iKey]) {
     Serial.println("Zeroing load cell");
+    oled.clear();
+    oled.setCursor(0, 0);
+    oled.setFont(Arial14);
+    oled.print("Resetting bellows");
     delay(1000);
     state.zeroLoadReading = state.loadReading;
+    forceMenuRefresh();
   }
   state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 1000000.0f;
   // Serial.println(state.pressure);

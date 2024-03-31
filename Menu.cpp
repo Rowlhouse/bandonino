@@ -13,12 +13,14 @@
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiWire oled;
 
+static bool sForceMenuRefresh = false;
+
 struct Option {
   Option(const char* name, int* value, int minValue, int maxValue, int deltaValue)
     : mName(name), mIntValue(value), mIntMinValue(minValue), mIntMaxValue(maxValue), mIntDeltaValue(deltaValue) {}
 
   Option(const char* name, int* value, const char** valueStrings, int numStrings)
-    : mName(name), mValueStrings(valueStrings), mIntValue(value), mIntMinValue(0), mIntMaxValue(numStrings-1), mIntDeltaValue(1) {}
+    : mName(name), mValueStrings(valueStrings), mIntValue(value), mIntMinValue(0), mIntMaxValue(numStrings - 1), mIntDeltaValue(1) {}
 
   Option(const char* name, float* value, float minValue, float maxValue, float deltaValue)
     : mName(name), mFloatValue(value), mFloatMinValue(minValue), mFloatMaxValue(maxValue), mFloatDeltaValue(deltaValue) {}
@@ -57,7 +59,7 @@ static const char* sForceBellowsStrings[] = {
 static Option sOptions[] = {
   Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM),
   Option("Press gain", &settings.pressureGain, 0, 200, 10),
-  Option("Pan left",  &settings.panLeft, -100, 100, 5),
+  Option("Pan left", &settings.panLeft, -100, 100, 5),
   Option("Pan right", &settings.panRight, -100, 100, 5),
   Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3),
   Option("Attack 25%", &settings.attack25, 0, 100, 5),
@@ -82,6 +84,11 @@ uint32_t sSplashTime = 0;  // When splash was triggered
 const uint32_t SPLASH_DURATION = 2000;
 
 bool sDisplayEnabled = true;
+
+//====================================================================================================
+void forceMenuRefresh() {
+  sForceMenuRefresh = true;
+}
 
 //====================================================================================================
 void scrollInText(int col, int row, const char* text, int ms) {
@@ -228,7 +235,7 @@ void updateMenu(Settings& settings, State& state) {
     }
   }
 
-  if (sCurrentOption != sPreviousOption) {
+  if (sCurrentOption != sPreviousOption || sForceMenuRefresh) {
     if (!sDisplayEnabled) {
       sDisplayEnabled = true;
       oled.ssd1306WriteCmd(SSD1306_DISPLAYON);
@@ -269,4 +276,6 @@ void updateMenu(Settings& settings, State& state) {
       displayOption(sCurrentOption + 3, 7, false, false);
     }
   }
+
+  sForceMenuRefresh = false;
 }

@@ -9,10 +9,10 @@ struct PinInputs {
   static const int columnCountLeft = 5;
   static const int columnCountRight = 6;
 
-  static constexpr byte columnPinsLeft[columnCountLeft] = { 0, 2, 3, 4, 5 };
-  static constexpr byte columnPinsRight[columnCountRight] = { 6, 7, 8, 9, 10, 11 };
+  static constexpr byte columnPinsLeft[columnCountLeft] = { 5, 4, 3, 2, 0 };
+  static constexpr byte columnPinsRight[columnCountRight] = { 11, 10, 9, 8, 7, 6 };
   static constexpr byte rowPinsLeft[rowCountLeft] = { 32, 31, 30, 29, 28, 27, 26, 25 };
-  static constexpr byte rowPinsRight[rowCountRight] = { 33, 34, 35, 36, 37, 38, 39, 40 };
+  static constexpr byte rowPinsRight[rowCountRight] = { 40, 39, 38, 37, 36, 35, 34, 33 };
 
   static const int keyCountLeft = rowCountLeft * columnCountLeft;
   static const int keyCountRight = rowCountRight * columnCountRight;
