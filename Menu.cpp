@@ -157,12 +157,13 @@ void displayStatus(const State& state) {
 
   oled.setCursor(0, 2);
   oled.printf("Abs pressure %3.2f", state.absPressure);
-  oled.clearToEOL();
+  // oled.clearToEOL(); // Note that this is not cheap!
   oled.setCursor(0, 3);
   oled.printf("Mod pressure %3.2f", state.modifiedPressure);
-  oled.clearToEOL();
+  // oled.clearToEOL();
   oled.setCursor(0, 4);
-  oled.printf("FPS %4.1f", sSmoothedFPS);
+  oled.printf("FPS %4.1f ", sSmoothedFPS);
+  // oled.clearToEOL();
 }
 
 //====================================================================================================
