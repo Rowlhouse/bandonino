@@ -83,6 +83,8 @@ const uint8_t* sJumboFont = Arial14;
 uint32_t sSplashTime = 0;  // When splash was triggered
 const uint32_t SPLASH_DURATION = 2000;
 
+static float sSmoothedFPS = 0;
+
 bool sDisplayEnabled = true;
 
 //====================================================================================================
@@ -160,8 +162,7 @@ void displayStatus(const State& state) {
   oled.printf("Mod pressure %3.2f", state.modifiedPressure);
   oled.clearToEOL();
   oled.setCursor(0, 4);
-  oled.printf("FPS %4.1f", 1000.0f / (state.loopStartTimeMillis - prevState.loopStartTimeMillis));
-  oled.clearToEOL();
+  oled.printf("FPS %4.1f", sSmoothedFPS);
 }
 
 //====================================================================================================
@@ -198,6 +199,12 @@ void displayOption(int optionIndex, int row, bool highlightLeft, bool highlightR
 
 //====================================================================================================
 void updateMenu(Settings& settings, State& state) {
+  int deltaTime = (state.loopStartTimeMillis - prevState.loopStartTimeMillis);
+  if (deltaTime > 0) {
+    float fps = 1000.0f / deltaTime;
+    float f = 0.05f;
+    sSmoothedFPS += (fps - sSmoothedFPS) * f;
+  }
 
   int deltaRotaryEncoder = state.rotaryEncoderPosition - prevState.rotaryEncoderPosition;
 
