@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+Settings settings;
+
 //====================================================================================================
 void Settings::updateMIDIRange() {
   midiMin = 127;

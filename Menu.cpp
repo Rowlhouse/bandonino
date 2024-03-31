@@ -13,13 +13,6 @@
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiWire oled;
 
-enum OptionType {
-  OPTION_TYPE_INT,
-  OPTION_TYPE_PERCENT,
-  OPTION_TYPE_LAYOUT,
-  OPTION_TYPE_MAX
-};
-
 struct Option {
   Option(const char* name, int* value, int minValue, int maxValue, int deltaValue)
     : mName(name), mIntValue(value), mIntMinValue(minValue), mIntMaxValue(maxValue), mIntDeltaValue(deltaValue) {}
@@ -63,13 +56,13 @@ static const char* sForceBellowsStrings[] = {
 
 static Option sOptions[] = {
   Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM),
-  Option("Press gain", &settings.pressureGain, 0.0f, 2.0f, 0.1f),
+  Option("Press gain", &settings.pressureGain, 0, 200, 10),
   Option("Pan left",  &settings.panLeft, -100, 100, 5),
   Option("Pan right", &settings.panRight, -100, 100, 5),
   Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3),
-  Option("Attack 25%", &settings.attack25, 0.0f, 1.0f, 0.02f),
-  Option("Attack 50%", &settings.attack50, 0.0f, 1.0f, 0.02f),
-  Option("Attack 75%", &settings.attack75, 0.0f, 1.0f, 0.02f),
+  Option("Attack 25%", &settings.attack25, 0, 100, 5),
+  Option("Attack 50%", &settings.attack50, 0, 100, 5),
+  Option("Attack 75%", &settings.attack75, 0, 100, 5),
 };
 
 const int NUM_OPTIONS = sizeof(sOptions) / sizeof(sOptions[0]);
@@ -155,10 +148,13 @@ void displayStatus(const State& state) {
 
   oled.setCursor(0, 2);
   oled.printf("Abs pressure %3.2f", state.absPressure);
+  oled.clearToEOL();
   oled.setCursor(0, 3);
   oled.printf("Mod pressure %3.2f", state.modifiedPressure);
+  oled.clearToEOL();
   oled.setCursor(0, 4);
   oled.printf("FPS %4.1f", 1000.0f / (state.loopStartTimeMillis - prevState.loopStartTimeMillis));
+  oled.clearToEOL();
 }
 
 //====================================================================================================

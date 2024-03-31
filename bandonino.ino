@@ -11,16 +11,12 @@
 #include "State.h"
 #include "Menu.h"
 
-Settings settings;
 BigState bigState;
 State state;
 State prevState;
 
 // Config
 const int keyReadDelayTime = 3;  // microseconds
-
-int prevPanLeft = -1000;
-int prevPanRight = -1000;
 
 bool runHardwareTest = true;
 bool showKeys = false;
@@ -98,7 +94,7 @@ void setup() {
 }
 
 //====================================================================================================
-void handleRotaryEncoder() {
+void readRotaryEncoder() {
   rotaryEncoder.tick();
   state.rotaryEncoderPosition = rotaryEncoder.getPosition();
 
@@ -107,16 +103,22 @@ void handleRotaryEncoder() {
 
 //====================================================================================================
 void loop() {
-  prevState = state;
   state.loopStartTimeMillis = millis();
 
+  prevState = state;
+
+  // Inputs needs to be processed before the menus
+  readRotaryEncoder();
   readAllKeys();
 
-  adjustPan();
+  // Need to update menu here so if things change then settings != prevSettings
+  updateMenu(settings, state);
+
+  updatePan();
 
   if (settings.forceBellows == 0) {
     readPressure();
-    handleBellows();
+    updateBellows();
   } else {
     state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
     state.midiVolume = 127;
@@ -126,11 +128,7 @@ void loop() {
     }
   }
 
-  handleRotaryEncoder();
-
   playAllButtons();
-
-  updateMenu(settings, state);
 
   if (runHardwareTest)
     hardwareTest();
@@ -153,12 +151,12 @@ void readPressure() {
     delay(1000);
     state.zeroLoadReading = state.loadReading;
   }
-  state.pressure = -((state.loadReading - state.zeroLoadReading) * settings.pressureGain) / 1000000.0f;
+  state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 1000000.0f;
   // Serial.println(state.pressure);
 }
 
 //====================================================================================================
-void handleBellows() {
+void updateBellows() {
   if (state.midiVolume == 0 || state.pressure == 0) {  //Bellows stopped
     state.bellowsOpening = 0;
     if (prevState.pressure != 0) {  //Bellows were not previously stopped
@@ -182,14 +180,18 @@ void handleBellows() {
   // Send the pressure to modulate volume
   state.absPressure = std::min(fabsf(state.pressure), 1.0f);  //Absolute Channel Pressure
 
+  float a25 = settings.attack25 / 100.0f;
+  float a50 = settings.attack50 / 100.0f;
+  float a75 = settings.attack75 / 100.0f;
+
   if (state.absPressure < 0.25f) {
-    state.modifiedPressure = (state.absPressure * settings.attack25) / 0.25f;
+    state.modifiedPressure = (state.absPressure * a25) / 0.25f;
   } else if (state.absPressure < 0.5f) {
-    state.modifiedPressure = settings.attack25 + ((state.absPressure - 0.25f) * (settings.attack50 - settings.attack25)) / 0.25f;
+    state.modifiedPressure = a25 + ((state.absPressure - 0.25f) * (a50 - a25)) / 0.25f;
   } else if (state.absPressure < 0.75f) {
-    state.modifiedPressure = settings.attack50 + ((state.absPressure - 0.5f) * (settings.attack75 - settings.attack50)) / 0.25f;
+    state.modifiedPressure = a50 + ((state.absPressure - 0.5f) * (a75 - a50)) / 0.25f;
   } else {
-    state.modifiedPressure = settings.attack75 + ((state.absPressure - 0.75f) * (1.0f - settings.attack75)) / 0.25f;
+    state.modifiedPressure = a75 + ((state.absPressure - 0.75f) * (1.0f - a75)) / 0.25f;
   }
 
   state.midiVolume = std::min((int)(128 * state.modifiedPressure), 127);
@@ -201,15 +203,16 @@ void handleBellows() {
 }
 
 //====================================================================================================
-void adjustPan() {
+void updatePan() {
   // Pan control (coarse). 0 is supposedly hard left, 64 center, 127 is hard right
-  if (settings.panLeft != prevPanLeft) {
-    usbMIDI.sendControlChange(10, 63 + (settings.panLeft * 63) / 100, settings.midiChannelLeft);
-    prevPanLeft = settings.panLeft;
+  // That's weird, as it means there's a different range on left and right!
+  state.midiPanLeft = 63 + (settings.panLeft * 63) / 100;
+  state.midiPanRight = 64 + (settings.panRight * 63) / 100;
+  if (state.midiPanLeft != prevState.midiPanLeft) {
+    usbMIDI.sendControlChange(10, state.midiPanLeft, settings.midiChannelLeft);
   }
-  if (settings.panRight != prevPanRight) {
-    usbMIDI.sendControlChange(10, 64 + (settings.panRight * 63) / 100, settings.midiChannelRight);
-    prevPanRight = settings.panRight;
+  if (state.midiPanRight != prevState.midiPanRight) {
+    usbMIDI.sendControlChange(10, state.midiPanRight, settings.midiChannelRight);
   }
 }
 

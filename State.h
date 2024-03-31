@@ -44,7 +44,9 @@ struct State {
   float absPressure = 0.0f; // clamped to 0 and 1
   float modifiedPressure = 0.0f; // clamped to 0 and 1
 
-  int midiVolume = 0; // scaled to 0-127
+  int midiPanLeft = -1;
+  int midiPanRight = -1;
+  int midiVolume = -1; // scaled to 0-127
 
   int rotaryEncoderPosition = 0;
   bool rotaryEncoderPressed = false;
