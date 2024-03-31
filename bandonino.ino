@@ -131,9 +131,6 @@ void loop() {
 
   if (runHardwareTest)
     hardwareTest();
-
-  // With no delay we spam so many midi messages it can cause problems.
-  // delay(5);
 }
 
 //====================================================================================================
@@ -214,9 +211,11 @@ void updatePan() {
   state.midiPanRight = 64 + (settings.panRight * 63) / 100;
   if (state.midiPanLeft != prevState.midiPanLeft) {
     usbMIDI.sendControlChange(10, state.midiPanLeft, settings.midiChannelLeft);
+    Serial.println("PanLeft");
   }
   if (state.midiPanRight != prevState.midiPanRight) {
     usbMIDI.sendControlChange(10, state.midiPanRight, settings.midiChannelRight);
+    Serial.println("PanRight");
   }
 }
 
