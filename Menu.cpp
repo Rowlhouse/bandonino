@@ -132,10 +132,10 @@ void initMenu() {
   display.setTextColor(0xf, 0x0);
   display.setTextWrap(false);
 
-#if 0
+#if 1
   scrollInText(0, 0, "Bandon.ino", 3);
   scrollInText(0, 8, "Danny Chapman", 3);
-  delay(500);
+  delay(200);
 #endif
 
   display.clearDisplay();
@@ -310,9 +310,9 @@ void updateMenu(Settings& settings, State& state) {
     int midLine = numLines / 2;
     for (int iLine = 0; iLine != numLines; ++iLine) {
       if (iLine == midLine)
-        displayOption(sCurrentOption + iLine - midLine, iLine, sAdjustOption, !sAdjustOption);
+        displayOption(sCurrentOption + iLine - midLine, iLine + 2, sAdjustOption, !sAdjustOption);
       else
-        displayOption(sCurrentOption + iLine - midLine, iLine, false, false);
+        displayOption(sCurrentOption + iLine - midLine, iLine + 2, false, false);
     }
     overlayFPS();
     display.display();

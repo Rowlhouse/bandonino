@@ -123,6 +123,8 @@ void loop() {
   // Need to update menu here so if things change then settings != prevSettings
   updateMenu(settings, state);
 
+  SyncNoteLayout();
+
   if (settings.forceBellows == 0) {
     readPressure();
     updateBellows();
