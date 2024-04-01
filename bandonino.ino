@@ -29,7 +29,14 @@ bool showRawLoadCellReading = false;
 
 //====================================================================================================
 // Rotary encoder pins and library configuration
-RotaryEncoder rotaryEncoder(A9, A8, RotaryEncoder::LatchMode::FOUR3);
+#define ROTARY_PIN1 A9
+#define ROTARY_PIN2 A8
+RotaryEncoder rotaryEncoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
+// This interrupt routine will be called on any change of one of the input signals
+void tickRotaryEncoderISR()
+{
+  rotaryEncoder.tick(); // just call tick() to check the state.
+}
 
 // Digital input pins
 const byte rotaryEncoderButtonPin = 17;
@@ -90,12 +97,15 @@ void setup() {
   state.zeroLoadReading = loadcell.read();
   state.pressure = 0;
 
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN1), tickRotaryEncoderISR, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN2), tickRotaryEncoderISR, CHANGE);
+
   initMenu();
 }
 
 //====================================================================================================
 void readRotaryEncoder() {
-  rotaryEncoder.tick();
+  // rotaryEncoder.tick();
   state.rotaryEncoderPosition = rotaryEncoder.getPosition();
 
   state.rotaryEncoderPressed = !digitalRead(rotaryEncoderButtonPin);
@@ -113,8 +123,6 @@ void loop() {
   // Need to update menu here so if things change then settings != prevSettings
   updateMenu(settings, state);
 
-  updatePan();
-
   if (settings.forceBellows == 0) {
     readPressure();
     updateBellows();
@@ -128,6 +136,8 @@ void loop() {
   }
 
   playAllButtons();
+
+  updatePan();
 
   if (runHardwareTest)
     hardwareTest();
@@ -144,15 +154,15 @@ void readPressure() {
   int iKey = INDEX_RIGHT(row, col);
   if (bigState.activeKeysRight[iKey]) {
     Serial.println("Zeroing load cell");
-    oled.clear();
-    oled.setCursor(0, 0);
-    oled.setFont(Arial14);
-    oled.print("Resetting bellows");
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.print("Resetting bellows");
+    display.display();
     delay(1000);
     state.zeroLoadReading = state.loadReading;
     forceMenuRefresh();
   }
-  state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 1000000.0f;
+  state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 250000.0f;
   // Serial.println(state.pressure);
 }
 
@@ -211,11 +221,11 @@ void updatePan() {
   state.midiPanRight = 64 + (settings.panRight * 63) / 100;
   if (state.midiPanLeft != prevState.midiPanLeft) {
     usbMIDI.sendControlChange(10, state.midiPanLeft, settings.midiChannelLeft);
-    Serial.println("PanLeft");
+    Serial.printf("PanLeft = %d\n", state.midiPanLeft);
   }
   if (state.midiPanRight != prevState.midiPanRight) {
     usbMIDI.sendControlChange(10, state.midiPanRight, settings.midiChannelRight);
-    Serial.println("PanRight");
+    Serial.printf("PanRight = %d\n", state.midiPanRight);
   }
 }
 

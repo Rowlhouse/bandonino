@@ -1,18 +1,35 @@
+#include "avr/pgmspace.h"
 #include <algorithm>
 #include "core_pins.h"
-// SSD1306Ascii v1.3.5
-// https://github.com/greiman/SSD1306Ascii
-#include <SSD1306Ascii.h>
-#include <SSD1306AsciiWire.h>
+
+//====================================================================================================
+// 1327 128x128 Display
+//====================================================================================================
+#include <Adafruit_SSD1327.h>
+#define I2C_ADDRESS 0x3D
+#define OLED_RESET -1
+Adafruit_SSD1327 display(128, 128, &Wire, OLED_RESET, 4000000);
+
+// Note that fonts can be generated from https://oleddisplay.squix.ch/#/home
+#include "Fonts/FreeSans9pt7b.h"
+static const GFXfont* sPageTitleFont = &FreeSans9pt7b;
+static const int sCharWidth = 5;
+static const int sCharHeight = 8;
+
+// Screen size in the defautl character size
+static const int sScreenCharWidth = 128 / sCharWidth;
+static const int sScreenCharHeight = 128 / sCharHeight;
+
+// The height of the top of page contents - i.e. draw using the default font at this y value plus char height to not
+// clip the page title
+static const int sPageY = 16;
+
+//====================================================================================================
 
 #include "Menu.h"
 #include "Settings.h"
 #include "State.h"
 #include "NoteNames.h"
-
-// OLED I2C address and library configuration
-#define I2C_ADDRESS 0x3C
-SSD1306AsciiWire oled;
 
 static bool sForceMenuRefresh = false;
 
@@ -76,11 +93,6 @@ static int sCurrentOption = PAGE_OPTIONS_PLAYING_NOTES;
 // toggle between adjusting option vs value by clicking
 static bool sAdjustOption = true;
 
-// fonts are width by height
-const uint8_t* sPageTitleFont = Arial14;
-const uint8_t* sNormalFont = Adafruit5x7;
-const uint8_t* sJumboFont = Arial14;
-
 uint32_t sSplashTime = 0;  // When splash was triggered
 const uint32_t SPLASH_DURATION = 2000;
 
@@ -94,37 +106,49 @@ void forceMenuRefresh() {
 }
 
 //====================================================================================================
-void scrollInText(int col, int row, const char* text, int ms) {
-  oled.setFont(sNormalFont);
-  int charWidth = sNormalFont[FONT_WIDTH];
-
-  const int textLen = strlen(text);
-  for (int i = textLen * charWidth; i-- != 0;) {
-    oled.setCursor(col * charWidth + i, row);
-    oled.print(text);
+void scrollInText(int x, int y, const char* text, int ms) {
+  for (int x1 = 128; --x1 >= x;) {
+    display.setCursor(x1, y);
+    display.printf("%s ", text);
+    display.display();
     delay(ms);
   }
 }
 
 //====================================================================================================
-// Display is 128x64 - so 16x8 characters
-void initMenu() {
-  Wire.begin();
-  Wire.setClock(400000L);                    // Fast mode
-  oled.begin(&Adafruit128x64, I2C_ADDRESS);  // OLED type and address
-
-  oled.clear();
-  scrollInText(0, 0, "Bandon.ino ", 3);
-  scrollInText(0, 1, "Danny Chapman ", 3);
-  delay(500);
-  oled.clear();
+void overlayFPS(int x = 0, int y = 128 - sCharHeight) {
+  display.setCursor(x, y);
+  display.printf("%5.1f ", sSmoothedFPS);
 }
 
 //====================================================================================================
-void displayPlayingNotes(byte playingNotes[], int row) {
-  oled.setFont(sJumboFont);
-  // int charWidth = sJumboFont[FONT_WIDTH];
+// Display is 128x64 - so 16x8 characters
+void initMenu() {
+  if (!display.begin(I2C_ADDRESS))
+    Serial.println("Unable to initialize OLED");
 
+  display.clearDisplay();
+  display.display();
+  display.setTextColor(0xf, 0x0);
+  display.setTextWrap(false);
+
+#if 0
+  scrollInText(0, 0, "Bandon.ino", 3);
+  scrollInText(0, 8, "Danny Chapman", 3);
+  delay(500);
+#endif
+
+  display.clearDisplay();
+  display.display();
+}
+
+// Max is Letter+accidental+octave+space times number of fingers, plus some for safety!
+const size_t maxTextLen = 32;
+static char lastTextLeft[maxTextLen] = { 0 };
+static char lastTextRight[maxTextLen] = { 0 };
+
+//====================================================================================================
+void displayPlayingNotes(byte playingNotes[], int row, char* prevText) {
   static char text[128];
   text[0] = 0;
 
@@ -134,68 +158,68 @@ void displayPlayingNotes(byte playingNotes[], int row) {
       col += sprintf(text + col, "%s ", midiNoteNames[i]);
     }
   }
-
-  oled.setCursor(0, row);
-  oled.printf(text);
-  oled.clearToEOL();
+  if (strcmp(text, prevText)) {
+    // the max number of spaces needed is:
+    // 64 / sCharWidth = 13
+    display.setTextSize(2);
+    display.setCursor(0, sPageY + row * sCharHeight);
+    display.printf("%s            ", text);
+    display.setTextSize(1);
+    display.display();
+    strcpy(prevText, text);
+  }
 }
 
 //====================================================================================================
 void displayAllPlayingNotes() {
-  displayPlayingNotes(bigState.playingNotesLeft, 3);
-  displayPlayingNotes(bigState.playingNotesRight, 6);
+  displayPlayingNotes(bigState.playingNotesLeft, 3, lastTextLeft);
+  displayPlayingNotes(bigState.playingNotesRight, 6, lastTextRight);
 
   // Also display pressure
-  oled.setCursor(64, 0);
+  display.setCursor(80, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  oled.printf("%s %3.2f  ", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
+  display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
+  display.display();
+
+  overlayFPS();
 }
 
 //====================================================================================================
 void displayStatus(const State& state) {
-  oled.setFont(sNormalFont);
-  // int charWidth = sNormalFont[FONT_WIDTH];
-
-  oled.setCursor(0, 2);
-  oled.printf("Abs pressure %3.2f", state.absPressure);
-  // oled.clearToEOL(); // Note that this is not cheap!
-  oled.setCursor(0, 3);
-  oled.printf("Mod pressure %3.2f", state.modifiedPressure);
-  // oled.clearToEOL();
-  oled.setCursor(0, 4);
-  oled.printf("FPS %4.1f ", sSmoothedFPS);
-  // oled.clearToEOL();
+  display.setCursor(0, sPageY + 1 * sCharHeight);
+  display.printf("Abs pressure %3.2f", state.absPressure);
+  display.setCursor(0, sPageY + 2 * sCharHeight);
+  display.printf("Mod pressure %3.2f", state.modifiedPressure);
+  display.setCursor(0, sPageY + 3 * sCharHeight);
+  display.printf("FPS %4.1f ", sSmoothedFPS);
 }
 
 //====================================================================================================
 void displayTitle(const char* title) {
-  oled.setFont(sPageTitleFont);
-  oled.setCursor(0, 0);
-  oled.print(title);
+  display.setFont(sPageTitleFont);
+  display.setCursor(0, sPageTitleFont->yAdvance);
+  display.print(title);
+  display.setFont(nullptr);
 }
 
 //====================================================================================================
 void displayOption(int optionIndex, int row, bool highlightLeft, bool highlightRight) {
   if (optionIndex < 0 || optionIndex >= NUM_OPTIONS)
     return;
-
-  oled.setFont(sNormalFont);
-  // int charWidth = sNormalFont[FONT_WIDTH];
-
   const Option& option = sOptions[optionIndex];
 
   const char* iconLeft = highlightLeft ? "*" : " ";
   const char* iconRight = highlightRight ? "*" : " ";
 
-  oled.setCursor(0, row);
+  display.setCursor(0, sPageY + row * sCharHeight);
   if (option.mIntValue) {
     if (option.mValueStrings) {
-      oled.printf("%s%-10s %8s%s", iconLeft, option.mName, option.mValueStrings[*option.mIntValue], iconRight);
+      display.printf("%s%-10s %8s%s", iconLeft, option.mName, option.mValueStrings[*option.mIntValue], iconRight);
     } else {
-      oled.printf("%s%-10s %8d%s", iconLeft, option.mName, *option.mIntValue, iconRight);
+      display.printf("%s%-10s %8d%s", iconLeft, option.mName, *option.mIntValue, iconRight);
     }
   } else if (option.mFloatValue) {
-    oled.printf("%s%-10s %8.2f%s", iconLeft, option.mName, *option.mFloatValue, iconRight);
+    display.printf("%s%-10s %8.2f%s", iconLeft, option.mName, *option.mFloatValue, iconRight);
   }
 }
 
@@ -247,9 +271,8 @@ void updateMenu(Settings& settings, State& state) {
   if (sCurrentOption != sPreviousOption || sForceMenuRefresh) {
     if (!sDisplayEnabled) {
       sDisplayEnabled = true;
-      oled.ssd1306WriteCmd(SSD1306_DISPLAYON);
     }
-    oled.clear();
+    display.clearDisplay();
 
     if (sCurrentOption == PAGE_OPTIONS_SPLASH) {
       displayTitle("Bandon.ino");
@@ -261,6 +284,7 @@ void updateMenu(Settings& settings, State& state) {
     } else {
       displayTitle("Options");
     }
+    display.display();
     sPreviousOption = sCurrentOption;
   }
 
@@ -269,21 +293,32 @@ void updateMenu(Settings& settings, State& state) {
     uint32_t elapsedTime = millis() - sSplashTime;
     if (elapsedTime > SPLASH_DURATION && sDisplayEnabled) {
       sDisplayEnabled = false;
-      oled.ssd1306WriteCmd(SSD1306_DISPLAYOFF);
+      display.clearDisplay();
+      display.display();
+    } else if (sDisplayEnabled) {
+      overlayFPS();
+      display.display();
     }
   } else if (sCurrentOption == PAGE_OPTIONS_PLAYING_NOTES) {
     displayAllPlayingNotes();
+    display.display();
   } else if (sCurrentOption == PAGE_OPTIONS_STATUS) {
     displayStatus(state);
-  } else {
-    if (changedValue || changedOption || toggledOptionValue) {
-      displayOption(sCurrentOption - 2, 2, false, false);
-      displayOption(sCurrentOption - 1, 3, false, false);
-      displayOption(sCurrentOption, 4, sAdjustOption, !sAdjustOption);
-      displayOption(sCurrentOption + 1, 5, false, false);
-      displayOption(sCurrentOption + 2, 6, false, false);
-      displayOption(sCurrentOption + 3, 7, false, false);
+    display.display();
+  } else if (changedValue || changedOption || toggledOptionValue) {
+    int numLines = 10;
+    int midLine = numLines / 2;
+    for (int iLine = 0; iLine != numLines; ++iLine) {
+      if (iLine == midLine)
+        displayOption(sCurrentOption + iLine - midLine, iLine, sAdjustOption, !sAdjustOption);
+      else
+        displayOption(sCurrentOption + iLine - midLine, iLine, false, false);
     }
+    overlayFPS();
+    display.display();
+  } else {
+    overlayFPS();
+    display.display();
   }
 
   sForceMenuRefresh = false;
