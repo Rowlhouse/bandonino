@@ -7,8 +7,8 @@
 
 struct Settings {
   int noteLayout = NOTELAYOUTTYPE_MANOURY;
-  int forceBellows = 0; // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
-  int pressureGain = 50; // Treat as percentage
+  int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
+  int pressureGain = 50;  // Treat as percentage
 
   uint32_t debounceTime = 10;  // milliseconds
 
@@ -30,6 +30,9 @@ struct Settings {
 
   // Call this to limit the range of midi notes we traverse after changing the layout
   void updateMIDIRange();
+
+  bool writeToCard(const char* filename);
+  bool readFromCard(const char* filename);
 };
 
 extern Settings settings;
