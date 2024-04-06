@@ -18,7 +18,7 @@ State prevState;
 // Config
 const int keyReadDelayTime = 3;  // microseconds
 
-bool runHardwareTest = true;
+bool runHardwareTest = false;
 bool showKeys = false;
 bool showBellows = false;
 bool flashLED = true;
@@ -33,9 +33,8 @@ bool showRawLoadCellReading = false;
 #define ROTARY_PIN2 A8
 RotaryEncoder rotaryEncoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
 // This interrupt routine will be called on any change of one of the input signals
-void tickRotaryEncoderISR()
-{
-  rotaryEncoder.tick(); // just call tick() to check the state.
+void tickRotaryEncoderISR() {
+  rotaryEncoder.tick();  // just call tick() to check the state.
 }
 
 // Digital input pins
@@ -70,11 +69,13 @@ byte pauseRight[] = { B01100, B01100, B01100, B01100, B01100, B01100, B01100, B0
 byte loopLeft[] = { B00000, B00000, B00010, B00100, B00010, B00000, B00000, B00000 };     // Define left side of loop track active glyph in binary to send to the LCD
 byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00000 };    // Define right side of loop track active glyph in binary to send to the LCD
 
+const int SYNC_VALUE = -1234;
+
 //====================================================================================================
 void setup() {
   Serial.begin(38400);
 
-  SyncNoteLayout();
+  syncNoteLayout();
 
   // Set pin modes - initially all LOW
   initInputPins(PinInputs::columnPinsLeft, PinInputs::columnCountLeft, INPUT);
@@ -116,6 +117,16 @@ void loop() {
   prevState = state;
   state.loopStartTimeMillis = millis();
 
+  // Periodically force the pan/volume to be sent, in case the receiving device wasn't plugged in when we last sent it!
+  static uint32_t lastMidiSyncTime = 0;
+  if (state.loopStartTimeMillis > lastMidiSyncTime + 1000) {
+    prevState.midiPanLeft = SYNC_VALUE;
+    prevState.midiPanRight = SYNC_VALUE;
+    prevState.midiVolumeLeft = SYNC_VALUE;
+    prevState.midiVolumeRight = SYNC_VALUE;
+    lastMidiSyncTime = state.loopStartTimeMillis;
+  }
+
   // Inputs needs to be processed before the menus
   readRotaryEncoder();
   readAllKeys();
@@ -123,23 +134,13 @@ void loop() {
   // Need to update menu here so if things change then settings != prevSettings
   updateMenu(settings, state);
 
-  SyncNoteLayout();
+  syncNoteLayout();
 
-  if (settings.forceBellows == 0) {
-    readPressure();
-    updateBellows();
-  } else {
-    state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
-    state.midiVolume = 127;
-    if (state.midiVolume != prevState.midiVolume) {
-      usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelLeft);
-      usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelRight);
-    }
-  }
-
-  playAllButtons();
+  updateBellows();
 
   updatePan();
+
+  playAllButtons();
 
   if (runHardwareTest)
     hardwareTest();
@@ -155,14 +156,7 @@ void readPressure() {
   int row = 2;
   int iKey = INDEX_RIGHT(row, col);
   if (bigState.activeKeysRight[iKey]) {
-    Serial.println("Zeroing load cell");
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.print("Resetting bellows");
-    display.display();
-    delay(1000);
-    state.zeroLoadReading = state.loadReading;
-    forceMenuRefresh();
+    zeroBellows();
   }
   state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 250000.0f;
   // Serial.println(state.pressure);
@@ -170,49 +164,68 @@ void readPressure() {
 
 //====================================================================================================
 void updateBellows() {
-  if (state.midiVolume == 0 || state.pressure == 0) {  //Bellows stopped
-    state.bellowsOpening = 0;
-    if (prevState.pressure != 0) {  //Bellows were not previously stopped
-      stopAllNotes();               //All Notes Off
+  if (settings.forceBellows == 0) {
+    readPressure();
+
+    // Send the pressure to modulate volume
+    state.absPressure = std::min(fabsf(state.pressure), 1.0f);  //Absolute Channel Pressure
+
+    float a25 = settings.attack25 / 100.0f;
+    float a50 = settings.attack50 / 100.0f;
+    float a75 = settings.attack75 / 100.0f;
+
+    if (state.absPressure < 0.25f) {
+      state.modifiedPressure = (state.absPressure * a25) / 0.25f;
+    } else if (state.absPressure < 0.5f) {
+      state.modifiedPressure = a25 + ((state.absPressure - 0.25f) * (a50 - a25)) / 0.25f;
+    } else if (state.absPressure < 0.75f) {
+      state.modifiedPressure = a50 + ((state.absPressure - 0.5f) * (a75 - a50)) / 0.25f;
+    } else {
+      state.modifiedPressure = a75 + ((state.absPressure - 0.75f) * (1.0f - a75)) / 0.25f;
     }
-  } else {                     //Bellows not stopped
-    if (state.pressure < 0) {  //Pull
-      state.bellowsOpening = 1;
-      if (prevState.pressure >= 0) {  //Pull and Previously Push or stopped
+
+    // Handle bellows reversals
+    if (state.pressure == 0) {  //Bellows stopped
+      state.bellowsOpening = 0;
+      if (prevState.pressure != 0) {  //Bellows were not previously stopped
         stopAllNotes();               //All Notes Off
       }
-    }
-    if (state.pressure > 0) {  //Push
-      state.bellowsOpening = -1;
-      if (prevState.pressure <= 0) {  //Push and Previously Pull or stopped
-        stopAllNotes();               //All Notes Off
+    } else {                     //Bellows not stopped
+      if (state.pressure < 0) {  //Pull
+        state.bellowsOpening = 1;
+        if (prevState.pressure >= 0) {  //Pull and Previously Push or stopped
+          stopAllNotes();               //All Notes Off
+        }
+      }
+      if (state.pressure > 0) {  //Push
+        state.bellowsOpening = -1;
+        if (prevState.pressure <= 0) {  //Push and Previously Pull or stopped
+          stopAllNotes();               //All Notes Off
+        }
       }
     }
-  }
 
-  // Send the pressure to modulate volume
-  state.absPressure = std::min(fabsf(state.pressure), 1.0f);  //Absolute Channel Pressure
+    // If the quantized volume is zero, force that to show as no bellows movement
+    if (state.midiVolumeLeft == 0 && state.midiVolumeRight == 0)
+      state.bellowsOpening = 0;
 
-  float a25 = settings.attack25 / 100.0f;
-  float a50 = settings.attack50 / 100.0f;
-  float a75 = settings.attack75 / 100.0f;
-
-  if (state.absPressure < 0.25f) {
-    state.modifiedPressure = (state.absPressure * a25) / 0.25f;
-  } else if (state.absPressure < 0.5f) {
-    state.modifiedPressure = a25 + ((state.absPressure - 0.25f) * (a50 - a25)) / 0.25f;
-  } else if (state.absPressure < 0.75f) {
-    state.modifiedPressure = a50 + ((state.absPressure - 0.5f) * (a75 - a50)) / 0.25f;
   } else {
-    state.modifiedPressure = a75 + ((state.absPressure - 0.75f) * (1.0f - a75)) / 0.25f;
+    state.modifiedPressure = 1.0f;
+    state.absPressure = 1.0f;
+
+    state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
   }
 
-  state.midiVolume = std::min((int)(128 * state.modifiedPressure), 127);
+  float volumeLeft = state.modifiedPressure * settings.levelLeft / 100.0f;
+  float volumeRight = state.modifiedPressure * settings.levelRight / 100.0f;
 
-  if (state.midiVolume != prevState.midiVolume) {
-    usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelLeft);
-    usbMIDI.sendControlChange(0x07, state.midiVolume, settings.midiChannelRight);
-  }
+  state.midiVolumeLeft = std::min((int)(128 * volumeLeft), 127);
+  state.midiVolumeRight = std::min((int)(128 * volumeRight), 127);
+
+  if (state.midiVolumeLeft != prevState.midiVolumeLeft)
+    usbMIDI.sendControlChange(0x07, state.midiVolumeLeft, settings.midiChannelLeft);
+  if (state.midiVolumeRight != prevState.midiVolumeRight)
+    usbMIDI.sendControlChange(0x07, state.midiVolumeRight, settings.midiChannelRight);
 }
 
 //====================================================================================================
@@ -223,11 +236,13 @@ void updatePan() {
   state.midiPanRight = 64 + (settings.panRight * 63) / 100;
   if (state.midiPanLeft != prevState.midiPanLeft) {
     usbMIDI.sendControlChange(10, state.midiPanLeft, settings.midiChannelLeft);
-    Serial.printf("PanLeft = %d\n", state.midiPanLeft);
+    if (prevState.midiPanLeft != SYNC_VALUE)
+      Serial.printf("PanLeft = %d\n", state.midiPanLeft);
   }
   if (state.midiPanRight != prevState.midiPanRight) {
     usbMIDI.sendControlChange(10, state.midiPanRight, settings.midiChannelRight);
-    Serial.printf("PanRight = %d\n", state.midiPanRight);
+    if (prevState.midiPanRight != SYNC_VALUE)
+      Serial.printf("PanRight = %d\n", state.midiPanRight);
   }
 }
 

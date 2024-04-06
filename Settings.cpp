@@ -77,7 +77,8 @@ bool Settings::writeToCard(const char* filename) {
   }
 
   JsonDocument doc;
-#define WRITE_SETTING(x) doc["x"] = x;
+#define WRITE_SETTING(x) doc[#x] = x;
+  WRITE_SETTING(slot);
   WRITE_SETTING(noteLayout);
   WRITE_SETTING(forceBellows);
   WRITE_SETTING(pressureGain);
@@ -99,6 +100,7 @@ bool Settings::writeToCard(const char* filename) {
   }
 
   file.close();
+  Serial.printf("Settings written to %s\n", filename);
   return true;
 }
 
@@ -120,8 +122,9 @@ bool Settings::readFromCard(const char* filename) {
     return false;
   }
 
-#define READ_SETTING(x) x = doc["x"];
+#define READ_SETTING(x) x = doc[#x];
 
+  READ_SETTING(slot);
   READ_SETTING(noteLayout);
   READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
@@ -138,5 +141,6 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(midiMax);
 
   file.close();
+  Serial.printf("Settings read from %s\n", filename);
   return true;
 }

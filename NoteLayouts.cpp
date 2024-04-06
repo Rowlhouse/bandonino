@@ -9,8 +9,15 @@
 
 const char* gNoteLayouts[] = {
   "Manoury",
+  "Manoury2",
   "Tango142"
 };
+
+//====================================================================================================
+const char* getNoteLayout() {
+  return gNoteLayouts[settings.noteLayout];
+}
+
 
 // To convert octaves from "standard" bando charts:
 // C = octave 3
@@ -42,6 +49,22 @@ const byte manouryLayoutRightOpen[PinInputs::keyCountRight] = {
 };
 const byte* manouryLayoutLeftClose = manouryLayoutLeftOpen;
 const byte* manouryLayoutRightClose = manouryLayoutRightOpen;
+
+
+//====================================================================================================
+// Manoury 2 layout
+//====================================================================================================
+const byte* manoury2LayoutLeftOpen = manouryLayoutLeftOpen;
+const byte manoury2LayoutRightOpen[PinInputs::keyCountRight] = {
+  NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(GS, 7), NOTE(AN, 7), NOTE(AS, 7), NOTE(BN, 7),
+  NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(BN, 4), NOTE(CN, 5), NOTE(FN, 7), NOTE(FS, 7), NOTE(GN, 7),
+  NOTE_UNUSED, NOTE(AS, 4), NOTE(CS, 5), NOTE(DN, 5), NOTE(DS, 5), NOTE(DN, 7), NOTE(DS, 7), NOTE(EN, 7),
+  NOTE(AN, 4), NOTE(FN, 5), NOTE(GS, 5), NOTE(BN, 5), NOTE(DN, 6), NOTE(FN, 6), NOTE(GS, 6), NOTE(BN, 6),
+  NOTE(EN, 5), NOTE(GN, 5), NOTE(AS, 5), NOTE(CS, 6), NOTE(EN, 6), NOTE(GN, 6), NOTE(AS, 6), NOTE(CS, 7),
+  NOTE(FS, 5), NOTE(AN, 5), NOTE(CN, 6), NOTE(DS, 6), NOTE(FS, 6), NOTE(AN, 6), NOTE(CN, 7), NOTE(DN, 7)
+};
+const byte* manoury2LayoutLeftClose = manoury2LayoutLeftOpen;
+const byte* manoury2LayoutRightClose = manoury2LayoutRightOpen;
 
 //====================================================================================================
 // Tango 142
@@ -81,29 +104,33 @@ const byte tango142LayoutRightClose[PinInputs::keyCountRight] = {
 };
 
 //====================================================================================================
-void SyncNoteLayout() {
-  switch (settings.noteLayout) {
-    case NOTELAYOUTTYPE_MANOURY:
-      if (bigState.noteLayoutLeftClose != manouryLayoutLeftClose) {
-        Serial.println("Switching to Manoury");
+void syncNoteLayout() {
+  if (bigState.noteLayoutName != getNoteLayout()) {
+    Serial.printf("Switching to %s\n", getNoteLayout());
+    switch (settings.noteLayout) {
+      case NOTELAYOUTTYPE_MANOURY:
         bigState.noteLayoutLeftClose = manouryLayoutLeftClose;
         bigState.noteLayoutLeftOpen = manouryLayoutLeftOpen;
         bigState.noteLayoutRightClose = manouryLayoutRightClose;
         bigState.noteLayoutRightOpen = manouryLayoutRightOpen;
-        settings.updateMIDIRange();
-      }
-      break;
-    case NOTELAYOUTTYPE_TANGO_142:
-      if (bigState.noteLayoutLeftClose != tango142LayoutLeftClose) {
-        Serial.println("Switching to Tango142");
+        break;
+      case NOTELAYOUTTYPE_MANOURY2:
+        bigState.noteLayoutLeftClose = manoury2LayoutLeftClose;
+        bigState.noteLayoutLeftOpen = manoury2LayoutLeftOpen;
+        bigState.noteLayoutRightClose = manoury2LayoutRightClose;
+        bigState.noteLayoutRightOpen = manoury2LayoutRightOpen;
+        break;
+      case NOTELAYOUTTYPE_TANGO_142:
         bigState.noteLayoutLeftClose = tango142LayoutLeftClose;
         bigState.noteLayoutLeftOpen = tango142LayoutLeftOpen;
         bigState.noteLayoutRightClose = tango142LayoutRightClose;
         bigState.noteLayoutRightOpen = tango142LayoutRightOpen;
-        settings.updateMIDIRange();
-      }
-      break;
-    default:
-      break;
+        break;
+      default:
+        Serial.printf("Unknown note layout %d\n", settings.noteLayout);
+        break;
+    }
+    settings.updateMIDIRange();
+    bigState.noteLayoutName = getNoteLayout();
   }
 }

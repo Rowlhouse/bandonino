@@ -15,6 +15,7 @@ struct BigState {
   const byte* noteLayoutRightOpen = nullptr;
   const byte* noteLayoutLeftClose = nullptr;
   const byte* noteLayoutRightClose = nullptr;
+  const char* noteLayoutName = nullptr;
 
   byte activeKeysLeft[PinInputs::keyCountLeft];
   byte activeKeysRight[PinInputs::keyCountRight];
@@ -46,7 +47,8 @@ struct State {
 
   int midiPanLeft = -1;
   int midiPanRight = -1;
-  int midiVolume = -1; // scaled to 0-127
+  int midiVolumeLeft = -1; // scaled to 0-127
+  int midiVolumeRight = -1; // scaled to 0-127
 
   int rotaryEncoderPosition = 0;
   bool rotaryEncoderPressed = false;

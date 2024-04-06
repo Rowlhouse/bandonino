@@ -6,6 +6,7 @@
 #include <wiring.h>
 
 struct Settings {
+  int slot; // settings slot - e.g. 0 to 9
   int noteLayout = NOTELAYOUTTYPE_MANOURY;
   int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   int pressureGain = 50;  // Treat as percentage
@@ -18,6 +19,13 @@ struct Settings {
   // percentages between -100 and 100
   int panLeft = -50;
   int panRight = 50;
+
+  // Percentages between 0 and 100
+  int levelLeft = 90;
+  int levelRight = 100;
+
+  int showFPS = 0;
+  int menuBrightness = 12; // 0 to 0xf
 
   // Shape the pressure response using attack params. As percentages
   int attack25 = 25;  // output when pressure = 25%
