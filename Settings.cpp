@@ -11,6 +11,10 @@
 
 Settings settings;
 
+const char* gExpressionTypes[] = {
+  "Breath", "Velocity"
+};
+
 //====================================================================================================
 void Settings::updateMIDIRange() {
   midiMin = 127;
@@ -81,6 +85,7 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(slot);
   WRITE_SETTING(noteLayout);
   WRITE_SETTING(forceBellows);
+  WRITE_SETTING(expressionType);
   WRITE_SETTING(pressureGain);
   WRITE_SETTING(debounceTime);
   WRITE_SETTING(midiChannelLeft);
@@ -128,6 +133,7 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(noteLayout);
   READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
+  READ_SETTING(expressionType);
   READ_SETTING(pressureGain);
   READ_SETTING(debounceTime);
   READ_SETTING(midiChannelLeft);

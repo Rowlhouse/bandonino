@@ -243,6 +243,7 @@ void initMenu() {
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3));
+  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionType, gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5));

@@ -5,11 +5,19 @@
 
 #include <wiring.h>
 
+enum ExpressionType {
+  EXPRESSION_TYPE_BREATH,
+  EXPRESSION_TYPE_VELOCITY,
+  EXPRESSION_TYPE_NUM
+};
+extern const char* gExpressionTypes[];
+
 struct Settings {
   int slot; // settings slot - e.g. 0 to 9
   int noteLayout = NOTELAYOUTTYPE_MANOURY;
   int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   int pressureGain = 50;  // Treat as percentage
+  int expressionType = EXPRESSION_TYPE_BREATH;
 
   uint32_t debounceTime = 10;  // milliseconds
 

@@ -216,11 +216,16 @@ void updateBellows() {
     state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
   }
 
-  float volumeLeft = state.modifiedPressure * settings.levelLeft / 100.0f;
-  float volumeRight = state.modifiedPressure * settings.levelRight / 100.0f;
+  if (settings.expressionType == EXPRESSION_TYPE_BREATH) {
+    float volumeLeft = state.modifiedPressure * settings.levelLeft / 100.0f;
+    float volumeRight = state.modifiedPressure * settings.levelRight / 100.0f;
 
-  state.midiVolumeLeft = std::min((int)(128 * volumeLeft), 127);
-  state.midiVolumeRight = std::min((int)(128 * volumeRight), 127);
+    state.midiVolumeLeft = std::min((int)(128 * volumeLeft), 127);
+    state.midiVolumeRight = std::min((int)(128 * volumeRight), 127);
+  } else {
+    state.midiVolumeLeft = 127;
+    state.midiVolumeRight = 127;
+  }
 
   if (state.midiVolumeLeft != prevState.midiVolumeLeft)
     usbMIDI.sendControlChange(0x07, state.midiVolumeLeft, settings.midiChannelLeft);
@@ -282,16 +287,22 @@ void stopAllNotes() {
 }
 
 //====================================================================================================
-// TODO Detect changing bellows direction and stop all notes - otherwise if we change key at the
-// same time, playing notes will get out of sync
-void playButtons(const byte activeKeys[], byte previousActiveKeys[], const int keyCount, const int midiChannel, const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[]) {
+void playButtons(
+  const byte activeKeys[],
+  byte previousActiveKeys[],
+  const int keyCount,
+  const int midiChannel,
+  const byte* noteLayoutOpen,
+  const byte* noteLayoutClose,
+  byte playingNotes[],
+  int velocity) {
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
       // Start playing
       if (state.bellowsOpening > 0)
-        playNote(noteLayoutOpen[iKey], 0x7f, midiChannel, playingNotes);
+        playNote(noteLayoutOpen[iKey], velocity, midiChannel, playingNotes);
       else if (state.bellowsOpening < 0)
-        playNote(noteLayoutClose[iKey], 0x7f, midiChannel, playingNotes);
+        playNote(noteLayoutClose[iKey], velocity, midiChannel, playingNotes);
       else
         continue;
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
@@ -306,11 +317,22 @@ void playButtons(const byte activeKeys[], byte previousActiveKeys[], const int k
 }
 
 //====================================================================================================
+int getVelocity(float volume) {
+  if (settings.expressionType == EXPRESSION_TYPE_BREATH) {
+    return 0x7f;
+  }
+  return std::clamp((int)(128 * state.modifiedPressure * volume), 0, 127);
+}
+
+//====================================================================================================
 void playAllButtons() {
+  int velocityLeft = getVelocity(settings.levelLeft / 100.0f);
+  int velocityRight = getVelocity(settings.levelRight / 100.0f);
+
   playButtons(bigState.activeKeysLeft, bigState.previousActiveKeysLeft, PinInputs::keyCountLeft,
-              settings.midiChannelLeft, bigState.noteLayoutLeftOpen, bigState.noteLayoutLeftClose, bigState.playingNotesLeft);
+              settings.midiChannelLeft, bigState.noteLayoutLeftOpen, bigState.noteLayoutLeftClose, bigState.playingNotesLeft, velocityLeft);
   playButtons(bigState.activeKeysRight, bigState.previousActiveKeysRight, PinInputs::keyCountRight,
-              settings.midiChannelRight, bigState.noteLayoutRightOpen, bigState.noteLayoutRightClose, bigState.playingNotesRight);
+              settings.midiChannelRight, bigState.noteLayoutRightOpen, bigState.noteLayoutRightClose, bigState.playingNotesRight, velocityRight);
 }
 
 //====================================================================================================
