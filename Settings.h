@@ -6,7 +6,7 @@
 #include <wiring.h>
 
 enum ExpressionType {
-  EXPRESSION_TYPE_BREATH,
+  EXPRESSION_TYPE_VOLUME,
   EXPRESSION_TYPE_VELOCITY,
   EXPRESSION_TYPE_NUM
 };
@@ -17,7 +17,7 @@ struct Settings {
   int noteLayout = NOTELAYOUTTYPE_MANOURY2;
   int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   int pressureGain = 50;  // Treat as percentage
-  int expressionTypes[2] = {EXPRESSION_TYPE_BREATH, EXPRESSION_TYPE_BREATH};
+  int expressionTypes[2] = {EXPRESSION_TYPE_VOLUME, EXPRESSION_TYPE_VOLUME};
 
   uint32_t debounceTime = 10;  // milliseconds
 
@@ -27,7 +27,7 @@ struct Settings {
   int pans[2] = {-50, 50};
 
   // Percentages between 0 and 100
-  int levels[2] = {100, 100};
+  int levels[2] = {100, 80};
 
   int showFPS = 0;
   int menuBrightness = 12; // 0 to 0xf

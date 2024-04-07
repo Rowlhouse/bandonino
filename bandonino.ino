@@ -227,7 +227,7 @@ void updateBellows() {
   }
 
   for (int side = 0; side != 2; ++side) {
-    if (settings.expressionTypes[side] == EXPRESSION_TYPE_BREATH) {
+    if (settings.expressionTypes[side] == EXPRESSION_TYPE_VOLUME) {
       float volume = state.modifiedPressure * settings.levels[side] / 100.0f;
       state.midiVolumes[side] = std::min((int)(128 * volume), 127);
     } else {
@@ -318,7 +318,7 @@ void playButtons(
 
 //====================================================================================================
 int getVelocity(int side) {
-  if (settings.expressionTypes[side] == EXPRESSION_TYPE_BREATH)
+  if (settings.expressionTypes[side] == EXPRESSION_TYPE_VOLUME)
     return 0x7f;
   return convertPercentToMidi(state.modifiedPressure * settings.levels[side]);
 }

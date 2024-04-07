@@ -12,7 +12,7 @@
 Settings settings;
 
 const char* gExpressionTypes[] = {
-  "Breath", "Velocity"
+  "Volume", "Velocity"
 };
 
 //====================================================================================================

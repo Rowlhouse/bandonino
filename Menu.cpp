@@ -56,8 +56,8 @@ struct Option {
   Option(const char* name, Action action)
     : mType(TYPE_ACTION), mName(name), mAction(action) {}
 
-  Option()
-    : mType(TYPE_NONE) {}
+  Option(Action action = nullptr)
+    : mType(TYPE_NONE), mAction(action) {}
 
   Type mType;
 
@@ -211,6 +211,18 @@ void forceMenuRefresh() {
 }
 
 //====================================================================================================
+void actionToggleDisplay() {
+  if (sDisplayEnabled) {
+    sDisplayEnabled = false;
+    display.clearDisplay();
+    display.display();
+  } else {
+    sDisplayEnabled = true;
+    forceMenuRefresh();
+  }
+}
+
+//====================================================================================================
 void scrollInText(int x, int y, const char* text, int ms) {
   for (int x1 = 128; --x1 >= x;) {
     display.setCursor(x1, y);
@@ -237,8 +249,8 @@ void initMenu() {
     Serial.println("Failed to load settings");
 
   sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
-  sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option() }));
-  sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option() }));
+  sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
+  sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", {Option(&actionToggleDisplay)}));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
@@ -249,7 +261,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 0, 200, 10));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
-  sPages.back().mOptions.push_back(Option("Expression",  &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5));
 
@@ -478,6 +490,9 @@ void updateMenu(Settings& settings, State& state) {
     sPreviousPageIndex = sCurrentPageIndex;
   }
 
+  if (!sDisplayEnabled)
+    return;
+
   // Now handle the live updating info
   if (sCurrentPageIndex == Page::TYPE_SPLASH) {
     uint32_t elapsedTime = millis() - sSplashTime;
@@ -501,13 +516,17 @@ void updateMenu(Settings& settings, State& state) {
       overlayFPS();
     display.display();
   } else if (changedValue || changedOption || toggledOptionValue) {
-    int numLines = 10;
-    int midLine = 2;
-    for (int iLine = 0; iLine != numLines; ++iLine) {
-      if (iLine == midLine)
-        displayOption(sCurrentPageIndex, sCurrentOptionIndex + iLine - midLine, iLine + 2, sAdjustOption, !sAdjustOption);
-      else
-        displayOption(sCurrentPageIndex, sCurrentOptionIndex + iLine - midLine, iLine + 2, false, false);
+    int maxLine = 10;
+    int offset = std::max(0, sCurrentOptionIndex - maxLine);
+    int numOptions = (int)currentPage().mOptions.size();
+    for (int iOption = 0; iOption != numOptions; ++iOption) {
+      int line = iOption - offset;
+      if (line >= 0 && line <= maxLine) {
+        if (iOption == sCurrentOptionIndex)
+          displayOption(sCurrentPageIndex, iOption, line + 2, sAdjustOption, !sAdjustOption);
+        else
+          displayOption(sCurrentPageIndex, iOption, line + 2, false, false);
+      }
     }
     if (settings.showFPS)
       overlayFPS();
