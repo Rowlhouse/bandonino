@@ -250,7 +250,7 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
   sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
-  sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", {Option(&actionToggleDisplay)}));
+  sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
@@ -296,38 +296,49 @@ void initMenu() {
   display.display();
 }
 
-// Max is Letter+accidental+octave+space times number of fingers, plus some for safety!
-const size_t maxTextLen = 32;
-static char lastTextLeft[maxTextLen] = { 0 };
-static char lastTextRight[maxTextLen] = { 0 };
+static std::vector<int> lastNotesLeft;
+static std::vector<int> lastNotesRight;
 
 //====================================================================================================
-void displayPlayingNotes(byte playingNotes[], int row, char* prevText) {
-  static char text[128];
-  text[0] = 0;
+void displayPlayingNotes(byte playingNotes[], int col, std::vector<int>& lastNotes) {
 
-  int col = 0;
+  static std::vector<int> notes;
+  notes.clear();
   for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
     if (playingNotes[i]) {
-      col += sprintf(text + col, "%s ", midiNoteNames[i]);
+      notes.push_back(i);
     }
   }
-  if (strcmp(text, prevText)) {
-    // the max number of spaces needed is:
-    // 64 / sCharWidth = 13
-    display.setTextSize(2);
-    display.setCursor(0, sPageY + row * sCharHeight);
-    display.printf("%s            ", text);
-    display.setTextSize(1);
-    display.display();
-    strcpy(prevText, text);
+
+  if (notes == lastNotes)
+    return;
+
+  display.setTextSize(2);
+
+  int row = 5;
+  for (size_t i = 0; i < notes.size(); ++i, --row) {
+    if (row <= 0)
+      break;
+    display.setCursor(col, sPageY + row * sCharHeight * 2);
+    display.printf("%-3s", midiNoteNames[notes[i]]);
   }
+  for (size_t i = notes.size() ; i < lastNotes.size() ; ++i, --row)
+  {
+    if (row <= 0)
+      break;
+    display.setCursor(col, sPageY + row * sCharHeight * 2);
+    display.printf("   ");
+  }
+  display.display();
+  lastNotes = notes;
+  display.setTextSize(1);
 }
 
 //====================================================================================================
 void displayAllPlayingNotes() {
-  displayPlayingNotes(bigState.playingNotes[LEFT], 3, lastTextLeft);
-  displayPlayingNotes(bigState.playingNotes[RIGHT], 6, lastTextRight);
+  int offset = 16;
+  displayPlayingNotes(bigState.playingNotes[LEFT], offset, lastNotesLeft);
+  displayPlayingNotes(bigState.playingNotes[RIGHT], 128 - offset - 3 * 2 * sCharWidth, lastNotesRight);
 
   // Also display pressure
   display.setCursor(80, sPageY);
