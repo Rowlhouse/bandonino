@@ -258,7 +258,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 0, 200, 10));
+  sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 10, 200, 10));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));

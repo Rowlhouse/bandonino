@@ -168,7 +168,7 @@ void readPressure() {
   if (bigState.activeKeysRight[iKey]) {
     zeroBellows();
   }
-  state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 250000.0f;
+  state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 500000.0f;
   // Serial.println(state.pressure);
 }
 
