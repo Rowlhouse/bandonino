@@ -72,19 +72,29 @@ byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00
 const int SYNC_VALUE = -1234;
 
 //====================================================================================================
+inline int convertFractionToMidi(float frac) {
+  return std::clamp((int)(128 * frac), 0, 127);
+}
+
+//====================================================================================================
+inline int convertPercentToMidi(int percent) {
+  return convertFractionToMidi(percent / 100.0f);
+}
+
+//====================================================================================================
 void setup() {
   Serial.begin(38400);
 
   syncNoteLayout();
 
   // Set pin modes - initially all LOW
-  initInputPins(PinInputs::columnPinsLeft, PinInputs::columnCountLeft, INPUT);
-  initInputPins(PinInputs::columnPinsRight, PinInputs::columnCountRight, INPUT);
-  initInputPins(PinInputs::rowPinsLeft, PinInputs::rowCountLeft, INPUT);
-  initInputPins(PinInputs::rowPinsRight, PinInputs::rowCountRight, INPUT);
+  initInputPins(PinInputs::columnPinsLeft, PinInputs::columnCounts[LEFT], INPUT);
+  initInputPins(PinInputs::columnPinsRight, PinInputs::columnCounts[RIGHT], INPUT);
+  initInputPins(PinInputs::rowPinsLeft, PinInputs::rowCounts[LEFT], INPUT);
+  initInputPins(PinInputs::rowPinsRight, PinInputs::rowCounts[RIGHT], INPUT);
 
-  initKeys(bigState.activeKeysLeft, PinInputs::keyCountLeft);
-  initKeys(bigState.activeKeysRight, PinInputs::keyCountRight);
+  initKeys(bigState.activeKeysLeft, PinInputs::keyCounts[LEFT]);
+  initKeys(bigState.activeKeysRight, PinInputs::keyCounts[RIGHT]);
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(rotaryEncoderButtonPin, INPUT_PULLUP);
@@ -120,10 +130,10 @@ void loop() {
   // Periodically force the pan/volume to be sent, in case the receiving device wasn't plugged in when we last sent it!
   static uint32_t lastMidiSyncTime = 0;
   if (state.loopStartTimeMillis > lastMidiSyncTime + 1000) {
-    prevState.midiPanLeft = SYNC_VALUE;
-    prevState.midiPanRight = SYNC_VALUE;
-    prevState.midiVolumeLeft = SYNC_VALUE;
-    prevState.midiVolumeRight = SYNC_VALUE;
+    prevState.midiPans[LEFT] = SYNC_VALUE;
+    prevState.midiPans[RIGHT] = SYNC_VALUE;
+    prevState.midiVolumes[LEFT] = SYNC_VALUE;
+    prevState.midiVolumes[RIGHT] = SYNC_VALUE;
     lastMidiSyncTime = state.loopStartTimeMillis;
   }
 
@@ -206,7 +216,7 @@ void updateBellows() {
     }
 
     // If the quantized volume is zero, force that to show as no bellows movement
-    if (state.midiVolumeLeft == 0 && state.midiVolumeRight == 0)
+    if (state.midiVolumes[LEFT] == 0 && state.midiVolumes[RIGHT] == 0)
       state.bellowsOpening = 0;
 
   } else {
@@ -216,38 +226,30 @@ void updateBellows() {
     state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
   }
 
-  if (settings.expressionType == EXPRESSION_TYPE_BREATH) {
-    float volumeLeft = state.modifiedPressure * settings.levelLeft / 100.0f;
-    float volumeRight = state.modifiedPressure * settings.levelRight / 100.0f;
+  for (int side = 0; side != 2; ++side) {
+    if (settings.expressionTypes[side] == EXPRESSION_TYPE_BREATH) {
+      float volume = state.modifiedPressure * settings.levels[side] / 100.0f;
+      state.midiVolumes[side] = std::min((int)(128 * volume), 127);
+    } else {
+      state.midiVolumes[side] = 127;
+    }
 
-    state.midiVolumeLeft = std::min((int)(128 * volumeLeft), 127);
-    state.midiVolumeRight = std::min((int)(128 * volumeRight), 127);
-  } else {
-    state.midiVolumeLeft = 127;
-    state.midiVolumeRight = 127;
+    if (state.midiVolumes[side] != prevState.midiVolumes[side])
+      usbMIDI.sendControlChange(0x07, state.midiVolumes[side], settings.midiChannels[side]);
   }
-
-  if (state.midiVolumeLeft != prevState.midiVolumeLeft)
-    usbMIDI.sendControlChange(0x07, state.midiVolumeLeft, settings.midiChannelLeft);
-  if (state.midiVolumeRight != prevState.midiVolumeRight)
-    usbMIDI.sendControlChange(0x07, state.midiVolumeRight, settings.midiChannelRight);
 }
 
 //====================================================================================================
 void updatePan() {
   // Pan control (coarse). 0 is supposedly hard left, 64 center, 127 is hard right
   // That's weird, as it means there's a different range on left and right!
-  state.midiPanLeft = 63 + (settings.panLeft * 63) / 100;
-  state.midiPanRight = 64 + (settings.panRight * 63) / 100;
-  if (state.midiPanLeft != prevState.midiPanLeft) {
-    usbMIDI.sendControlChange(10, state.midiPanLeft, settings.midiChannelLeft);
-    if (prevState.midiPanLeft != SYNC_VALUE)
-      Serial.printf("PanLeft = %d\n", state.midiPanLeft);
-  }
-  if (state.midiPanRight != prevState.midiPanRight) {
-    usbMIDI.sendControlChange(10, state.midiPanRight, settings.midiChannelRight);
-    if (prevState.midiPanRight != SYNC_VALUE)
-      Serial.printf("PanRight = %d\n", state.midiPanRight);
+  for (int side = 0; side != 2; ++side) {
+    state.midiPans[side] = 64 + (settings.pans[side] * 63) / 100;
+    if (state.midiPans[side] != prevState.midiPans[side]) {
+      usbMIDI.sendControlChange(10, state.midiPans[side], settings.midiChannels[side]);
+      if (prevState.midiPans[side] != SYNC_VALUE)
+        Serial.printf("Pan %d = %d\n", side, state.midiPans[side]);
+    }
   }
 }
 
@@ -274,15 +276,13 @@ void stopNote(byte midiNote, byte velocity, const int midiChannel, byte playingN
 //====================================================================================================
 void stopAllNotes() {
   // Serial.println("All notes off");
-  usbMIDI.sendControlChange(0x7B, 0, settings.midiChannelLeft);
-  usbMIDI.sendControlChange(0x7B, 0, settings.midiChannelRight);
-  for (int iKey = 0; iKey != PinInputs::keyCountLeft; ++iKey)
-    bigState.previousActiveKeysLeft[iKey] = 0;
-  for (int iKey = 0; iKey != PinInputs::keyCountRight; ++iKey)
-    bigState.previousActiveKeysRight[iKey] = 0;
-  for (int midi = settings.midiMin; midi <= settings.midiMax; ++midi) {
-    bigState.playingNotesLeft[midi] = 0;
-    bigState.playingNotesRight[midi] = 0;
+  for (int side = 0; side != 2; ++side) {
+    usbMIDI.sendControlChange(0x7B, 0, settings.midiChannels[side]);
+    for (int iKey = 0; iKey != PinInputs::keyCounts[side]; ++iKey)
+      bigState.previousActiveKeys(side)[iKey] = 0;
+    for (int midi = settings.midiMin; midi <= settings.midiMax; ++midi) {
+      bigState.playingNotes[side][midi] = 0;
+    }
   }
 }
 
@@ -317,22 +317,19 @@ void playButtons(
 }
 
 //====================================================================================================
-int getVelocity(float volume) {
-  if (settings.expressionType == EXPRESSION_TYPE_BREATH) {
+int getVelocity(int side) {
+  if (settings.expressionTypes[side] == EXPRESSION_TYPE_BREATH)
     return 0x7f;
-  }
-  return std::clamp((int)(128 * state.modifiedPressure * volume), 0, 127);
+  return convertPercentToMidi(state.modifiedPressure * settings.levels[side]);
 }
 
 //====================================================================================================
 void playAllButtons() {
-  int velocityLeft = getVelocity(settings.levelLeft / 100.0f);
-  int velocityRight = getVelocity(settings.levelRight / 100.0f);
-
-  playButtons(bigState.activeKeysLeft, bigState.previousActiveKeysLeft, PinInputs::keyCountLeft,
-              settings.midiChannelLeft, bigState.noteLayoutLeftOpen, bigState.noteLayoutLeftClose, bigState.playingNotesLeft, velocityLeft);
-  playButtons(bigState.activeKeysRight, bigState.previousActiveKeysRight, PinInputs::keyCountRight,
-              settings.midiChannelRight, bigState.noteLayoutRightOpen, bigState.noteLayoutRightClose, bigState.playingNotesRight, velocityRight);
+  for (int side = 0; side != 2; ++side) {
+    int velocity = getVelocity(side);
+    playButtons(bigState.activeKeys(side), bigState.previousActiveKeys(side), PinInputs::keyCounts[side],
+                settings.midiChannels[side], bigState.noteLayout.open(side), bigState.noteLayout.close(side), bigState.playingNotes[side], velocity);
+  }
 }
 
 //====================================================================================================
@@ -372,8 +369,9 @@ void readKeys(const byte rowPins[], const byte columnPins[], byte activeKeys[], 
 
 //====================================================================================================
 void readAllKeys() {
-  readKeys(PinInputs::rowPinsLeft, PinInputs::columnPinsLeft, bigState.activeKeysLeft, bigState.activeKeysTimeLeft, PinInputs::rowCountLeft, PinInputs::columnCountLeft);
-  readKeys(PinInputs::rowPinsRight, PinInputs::columnPinsRight, bigState.activeKeysRight, bigState.activeKeysTimeRight, PinInputs::rowCountRight, PinInputs::columnCountRight);
+  for (int side = 0; side != 2; ++side) {
+    readKeys(PinInputs::rowPins(side), PinInputs::columnPins(side), bigState.activeKeys(side), bigState.activeKeysTimes(side), PinInputs::rowCounts[side], PinInputs::columnCounts[side]);
+  }
 }
 
 //====================================================================================================
@@ -411,24 +409,24 @@ void hardwareTest() {
 
   if (showKeys) {
     Serial.println("Keys left");
-    for (int j = 0; j != PinInputs::columnCountLeft; ++j) {
-      for (int i = 0; i < PinInputs::rowCountLeft; i++) {
+    for (int j = 0; j != PinInputs::columnCounts[LEFT]; ++j) {
+      for (int i = 0; i < PinInputs::rowCounts[LEFT]; i++) {
         int iKey = INDEX_LEFT(i, j);
         Serial.print(bigState.activeKeysLeft[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayoutLeftOpen[iKey] : bigState.noteLayoutLeftClose[iKey]);
+        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayout.leftOpen[iKey] : bigState.noteLayout.leftClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }
       Serial.println();
     }
     Serial.println("Keys right");
-    for (int j = 0; j != PinInputs::columnCountRight; ++j) {
-      for (int i = 0; i < PinInputs::rowCountRight; i++) {
+    for (int j = 0; j != PinInputs::columnCounts[RIGHT]; ++j) {
+      for (int i = 0; i < PinInputs::rowCounts[RIGHT]; i++) {
         int iKey = INDEX_RIGHT(i, j);
         Serial.print(bigState.activeKeysRight[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayoutRightOpen[iKey] : bigState.noteLayoutRightClose[iKey]);
+        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayout.rightOpen[iKey] : bigState.noteLayout.rightClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }
@@ -440,13 +438,13 @@ void hardwareTest() {
   if (showPlayingNotes) {
     Serial.print("Playing notes left: ");
     for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
-      if (bigState.playingNotesLeft[i])
+      if (bigState.playingNotes[LEFT][i])
         Serial.printf("%s ", midiNoteNames[i]);
     }
     Serial.println();
     Serial.print("Playing notes right: ");
     for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
-      if (bigState.playingNotesRight[i])
+      if (bigState.playingNotes[RIGHT][i])
         Serial.printf("%s ", midiNoteNames[i]);
     }
     Serial.println();

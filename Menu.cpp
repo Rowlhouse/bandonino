@@ -243,19 +243,23 @@ void initMenu() {
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3));
-  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionType, gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5));
-
   sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 0, 200, 10));
+
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
+  sPages.back().mOptions.push_back(Option("Expression",  &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5));
+
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
+  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[RIGHT], gExpressionTypes, EXPRESSION_TYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Pan left", &settings.panLeft, -100, 100, 5));
-  sPages.back().mOptions.push_back(Option("Pan right", &settings.panRight, -100, 100, 5));
-  sPages.back().mOptions.push_back(Option("Vol left", &settings.levelLeft, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Vol right", &settings.levelRight, 0, 100, 5));
   sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
 
@@ -310,8 +314,8 @@ void displayPlayingNotes(byte playingNotes[], int row, char* prevText) {
 
 //====================================================================================================
 void displayAllPlayingNotes() {
-  displayPlayingNotes(bigState.playingNotesLeft, 3, lastTextLeft);
-  displayPlayingNotes(bigState.playingNotesRight, 6, lastTextRight);
+  displayPlayingNotes(bigState.playingNotes[LEFT], 3, lastTextLeft);
+  displayPlayingNotes(bigState.playingNotes[RIGHT], 6, lastTextRight);
 
   // Also display pressure
   display.setCursor(80, sPageY);

@@ -19,20 +19,14 @@ const char* gExpressionTypes[] = {
 void Settings::updateMIDIRange() {
   midiMin = 127;
   midiMax = 0;
-  if (bigState.noteLayoutLeftOpen) {
-    for (int i = 0; i != PinInputs::keyCountLeft; ++i) {
-      midiMax = std::max(bigState.noteLayoutLeftOpen[i], midiMax);
-      midiMin = std::min(bigState.noteLayoutLeftOpen[i], midiMin);
-      midiMax = std::max(bigState.noteLayoutLeftClose[i], midiMax);
-      midiMin = std::min(bigState.noteLayoutLeftClose[i], midiMin);
-    }
-  }
-  if (bigState.noteLayoutRightOpen) {
-    for (int i = 0; i != PinInputs::keyCountRight; ++i) {
-      midiMax = std::max(bigState.noteLayoutRightOpen[i], midiMax);
-      midiMin = std::min(bigState.noteLayoutRightOpen[i], midiMin);
-      midiMax = std::max(bigState.noteLayoutRightClose[i], midiMax);
-      midiMin = std::min(bigState.noteLayoutRightClose[i], midiMin);
+  if (!bigState.noteLayout.leftOpen)
+    return;
+  for (int j = 0; j != 2; ++j) {
+    for (int i = 0; i != PinInputs::keyCounts[j]; ++i) {
+      midiMax = std::max(bigState.noteLayout.open(j)[i], midiMax);
+      midiMin = std::min(bigState.noteLayout.open(j)[i], midiMin);
+      midiMax = std::max(bigState.noteLayout.close(j)[i], midiMax);
+      midiMin = std::min(bigState.noteLayout.close(j)[i], midiMin);
     }
   }
 }
@@ -85,13 +79,16 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(slot);
   WRITE_SETTING(noteLayout);
   WRITE_SETTING(forceBellows);
-  WRITE_SETTING(expressionType);
+  WRITE_SETTING(expressionTypes[LEFT]);
+  WRITE_SETTING(expressionTypes[RIGHT]);
   WRITE_SETTING(pressureGain);
   WRITE_SETTING(debounceTime);
-  WRITE_SETTING(midiChannelLeft);
-  WRITE_SETTING(midiChannelRight);
-  WRITE_SETTING(panLeft);
-  WRITE_SETTING(panRight);
+  WRITE_SETTING(midiChannels[LEFT]);
+  WRITE_SETTING(midiChannels[RIGHT]);
+  WRITE_SETTING(pans[LEFT]);
+  WRITE_SETTING(pans[RIGHT]);
+  WRITE_SETTING(levels[LEFT]);
+  WRITE_SETTING(levels[RIGHT]);
   WRITE_SETTING(attack25);
   WRITE_SETTING(attack50);
   WRITE_SETTING(attack75);
@@ -131,15 +128,17 @@ bool Settings::readFromCard(const char* filename) {
 
   READ_SETTING(slot);
   READ_SETTING(noteLayout);
-  READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
-  READ_SETTING(expressionType);
+  READ_SETTING(expressionTypes[LEFT]);
+  READ_SETTING(expressionTypes[RIGHT]);
   READ_SETTING(pressureGain);
   READ_SETTING(debounceTime);
-  READ_SETTING(midiChannelLeft);
-  READ_SETTING(midiChannelRight);
-  READ_SETTING(panLeft);
-  READ_SETTING(panRight);
+  READ_SETTING(midiChannels[LEFT]);
+  READ_SETTING(midiChannels[RIGHT]);
+  READ_SETTING(pans[LEFT]);
+  READ_SETTING(pans[RIGHT]);
+  READ_SETTING(levels[LEFT]);
+  READ_SETTING(levels[RIGHT]);
   READ_SETTING(attack25);
   READ_SETTING(attack50);
   READ_SETTING(attack75);

@@ -31,7 +31,7 @@ const char* getNoteLayout() {
 //====================================================================================================
 // Manoury layout
 //====================================================================================================
-const byte manouryLayoutLeftOpen[PinInputs::keyCountLeft] = {
+const byte manouryLayoutLeftOpen[PinInputs::keyCounts[LEFT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE(DN, 3), NOTE(CS, 3), NOTE(CN, 3), NOTE(GS, 3), NOTE(GN, 3), NOTE(FS, 3),
   NOTE_UNUSED, NOTE(GS, 5), NOTE(FN, 3), NOTE(EN, 3), NOTE(DS, 3), NOTE(BN, 3), NOTE(AS, 3), NOTE(AN, 3),
   NOTE(AN, 5), NOTE(FN, 5), NOTE(DN, 5), NOTE(BN, 4), NOTE(GS, 4), NOTE(FN, 4), NOTE(DN, 4), NOTE_UNUSED,
@@ -39,7 +39,7 @@ const byte manouryLayoutLeftOpen[PinInputs::keyCountLeft] = {
   NOTE(FS, 5), NOTE(DS, 5), NOTE(CN, 5), NOTE(AN, 4), NOTE(FS, 4), NOTE(DS, 4), NOTE(CN, 4), NOTE_UNUSED
 };
 
-const byte manouryLayoutRightOpen[PinInputs::keyCountRight] = {
+const byte manouryLayoutRightOpen[PinInputs::keyCounts[RIGHT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(GS, 7), NOTE(AN, 7), NOTE(AS, 7), NOTE(BN, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(AN, 4), NOTE(AS, 4), NOTE(FN, 7), NOTE(FS, 7), NOTE(GN, 7),
   NOTE(DS, 5), NOTE_UNUSED, NOTE(BN, 4), NOTE(CN, 5), NOTE(CS, 5), NOTE(DN, 7), NOTE(DS, 7), NOTE(EN, 7),
@@ -50,12 +50,13 @@ const byte manouryLayoutRightOpen[PinInputs::keyCountRight] = {
 const byte* manouryLayoutLeftClose = manouryLayoutLeftOpen;
 const byte* manouryLayoutRightClose = manouryLayoutRightOpen;
 
+NoteLayout manouryNoteLayout = { manouryLayoutLeftOpen, manouryLayoutRightOpen, manouryLayoutLeftClose, manouryLayoutRightClose, gNoteLayouts[NOTELAYOUTTYPE_MANOURY] };
 
 //====================================================================================================
 // Manoury 2 layout
 //====================================================================================================
 const byte* manoury2LayoutLeftOpen = manouryLayoutLeftOpen;
-const byte manoury2LayoutRightOpen[PinInputs::keyCountRight] = {
+const byte manoury2LayoutRightOpen[PinInputs::keyCounts[RIGHT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(GS, 7), NOTE(AN, 7), NOTE(AS, 7), NOTE(BN, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(BN, 4), NOTE(CN, 5), NOTE(FN, 7), NOTE(FS, 7), NOTE(GN, 7),
   NOTE_UNUSED, NOTE(AS, 4), NOTE(CS, 5), NOTE(DN, 5), NOTE(DS, 5), NOTE(DN, 7), NOTE(DS, 7), NOTE(EN, 7),
@@ -66,10 +67,12 @@ const byte manoury2LayoutRightOpen[PinInputs::keyCountRight] = {
 const byte* manoury2LayoutLeftClose = manoury2LayoutLeftOpen;
 const byte* manoury2LayoutRightClose = manoury2LayoutRightOpen;
 
+NoteLayout manoury2NoteLayout = { manoury2LayoutLeftOpen, manoury2LayoutRightOpen, manoury2LayoutLeftClose, manoury2LayoutRightClose, gNoteLayouts[NOTELAYOUTTYPE_MANOURY2] };
+
 //====================================================================================================
 // Tango 142
 //====================================================================================================
-const byte tango142LayoutLeftOpen[PinInputs::keyCountLeft] = {
+const byte tango142LayoutLeftOpen[PinInputs::keyCounts[LEFT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(GS, 3), NOTE(AS, 3), NOTE(CS, 4), NOTE(FN, 4), NOTE(GS, 5),
   NOTE_UNUSED, NOTE(EN, 3), NOTE(AN, 3), NOTE(GN, 4), NOTE(DS, 4), NOTE(FN, 5), NOTE(AS, 4), NOTE(FN, 3),
   NOTE(DN, 3), NOTE(DN, 4), NOTE(AN, 4), NOTE(CN, 5), NOTE(EN, 5), NOTE(CN, 4), NOTE(GN, 3), NOTE_UNUSED,
@@ -77,7 +80,7 @@ const byte tango142LayoutLeftOpen[PinInputs::keyCountLeft] = {
   NOTE(BN, 3), NOTE(GN, 5), NOTE(AN, 5), NOTE(DS, 5), NOTE(FS, 4), NOTE(DS, 3), NOTE(CN, 3), NOTE_UNUSED
 };
 
-const byte tango142LayoutRightOpen[PinInputs::keyCountRight] = {
+const byte tango142LayoutRightOpen[PinInputs::keyCounts[RIGHT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(BN, 7), NOTE(GS, 7), NOTE(GN, 7), NOTE(FN, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(CS, 5), NOTE(AN, 7), NOTE(FS, 7), NOTE(EN, 7), NOTE(DS, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE(CN, 5), NOTE(DN, 5), NOTE(GN, 5), NOTE(AS, 6), NOTE(CN, 7), NOTE(DN, 7),
@@ -86,7 +89,7 @@ const byte tango142LayoutRightOpen[PinInputs::keyCountRight] = {
   NOTE(AS, 4), NOTE(DS, 5), NOTE(FN, 6), NOTE(DS, 6), NOTE(FS, 6), NOTE(AN, 6), NOTE(CS, 7), NOTE(GN, 6)
 };
 
-const byte tango142LayoutLeftClose[PinInputs::keyCountLeft] = {
+const byte tango142LayoutLeftClose[PinInputs::keyCounts[LEFT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(GS, 3), NOTE(AS, 3), NOTE(DS, 4), NOTE(DS, 5), NOTE(GN, 5),
   NOTE_UNUSED, NOTE(DN, 3), NOTE(DN, 4), NOTE(AS, 4), NOTE(CN, 5), NOTE(CS, 4), NOTE(CN, 4), NOTE(FS, 3),
   NOTE(EN, 3), NOTE(GN, 3), NOTE(GN, 4), NOTE(BN, 4), NOTE(DN, 5), NOTE(FN, 5), NOTE(FS, 4), NOTE_UNUSED,
@@ -94,7 +97,7 @@ const byte tango142LayoutLeftClose[PinInputs::keyCountLeft] = {
   NOTE(EN, 4), NOTE(FS, 5), NOTE(GS, 5), NOTE(BN, 5), NOTE(FN, 4), NOTE(CS, 3), NOTE(FN, 3), NOTE_UNUSED
 };
 
-const byte tango142LayoutRightClose[PinInputs::keyCountRight] = {
+const byte tango142LayoutRightClose[PinInputs::keyCounts[RIGHT]] = {
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(AN, 7), NOTE(GS, 7), NOTE(FS, 7), NOTE(FN, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE_UNUSED, NOTE(CN, 5), NOTE(GN, 7), NOTE(AS, 6), NOTE(CN, 7), NOTE(DS, 7),
   NOTE_UNUSED, NOTE_UNUSED, NOTE(DN, 5), NOTE(CS, 5), NOTE(GS, 5), NOTE(AS, 5), NOTE(CN, 6), NOTE(DN, 7),
@@ -103,34 +106,26 @@ const byte tango142LayoutRightClose[PinInputs::keyCountRight] = {
   NOTE(AS, 4), NOTE(DS, 5), NOTE(FN, 6), NOTE(EN, 6), NOTE(GS, 6), NOTE(BN, 6), NOTE(EN, 7), NOTE(DS, 6)
 };
 
+NoteLayout tango142NoteLayout = { tango142LayoutLeftOpen, tango142LayoutRightOpen, tango142LayoutLeftClose, tango142LayoutRightClose, gNoteLayouts[NOTELAYOUTTYPE_TANGO_142] };
+
 //====================================================================================================
 void syncNoteLayout() {
-  if (bigState.noteLayoutName != getNoteLayout()) {
+  if (bigState.noteLayout.name != getNoteLayout()) {
     Serial.printf("Switching to %s\n", getNoteLayout());
     switch (settings.noteLayout) {
       case NOTELAYOUTTYPE_MANOURY:
-        bigState.noteLayoutLeftClose = manouryLayoutLeftClose;
-        bigState.noteLayoutLeftOpen = manouryLayoutLeftOpen;
-        bigState.noteLayoutRightClose = manouryLayoutRightClose;
-        bigState.noteLayoutRightOpen = manouryLayoutRightOpen;
+        bigState.noteLayout = manouryNoteLayout;
         break;
       case NOTELAYOUTTYPE_MANOURY2:
-        bigState.noteLayoutLeftClose = manoury2LayoutLeftClose;
-        bigState.noteLayoutLeftOpen = manoury2LayoutLeftOpen;
-        bigState.noteLayoutRightClose = manoury2LayoutRightClose;
-        bigState.noteLayoutRightOpen = manoury2LayoutRightOpen;
+        bigState.noteLayout = manoury2NoteLayout;
         break;
       case NOTELAYOUTTYPE_TANGO_142:
-        bigState.noteLayoutLeftClose = tango142LayoutLeftClose;
-        bigState.noteLayoutLeftOpen = tango142LayoutLeftOpen;
-        bigState.noteLayoutRightClose = tango142LayoutRightClose;
-        bigState.noteLayoutRightOpen = tango142LayoutRightOpen;
+        bigState.noteLayout = tango142NoteLayout;
         break;
       default:
         Serial.printf("Unknown note layout %d\n", settings.noteLayout);
         break;
     }
     settings.updateMIDIRange();
-    bigState.noteLayoutName = getNoteLayout();
   }
 }

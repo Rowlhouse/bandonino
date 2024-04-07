@@ -11,24 +11,28 @@ struct Settings;
 // Big state - don't copy
 struct BigState {
   // The actual note layout
-  const byte* noteLayoutLeftOpen = nullptr;
-  const byte* noteLayoutRightOpen = nullptr;
-  const byte* noteLayoutLeftClose = nullptr;
-  const byte* noteLayoutRightClose = nullptr;
-  const char* noteLayoutName = nullptr;
+  NoteLayout noteLayout;
 
-  byte activeKeysLeft[PinInputs::keyCountLeft];
-  byte activeKeysRight[PinInputs::keyCountRight];
+  byte activeKeysLeft[PinInputs::keyCounts[LEFT]];
+  byte activeKeysRight[PinInputs::keyCounts[RIGHT]];
+  byte* activeKeys(int side) {
+    return side ? activeKeysRight : activeKeysLeft;
+  };
 
-  byte previousActiveKeysLeft[PinInputs::keyCountLeft];
-  byte previousActiveKeysRight[PinInputs::keyCountRight];
+  byte previousActiveKeysLeft[PinInputs::keyCounts[LEFT]];
+  byte previousActiveKeysRight[PinInputs::keyCounts[RIGHT]];
+  byte* previousActiveKeys(int side) {
+    return side ? previousActiveKeysRight : previousActiveKeysLeft;
+  };
 
-  uint32_t activeKeysTimeLeft[PinInputs::keyCountLeft];
-  uint32_t activeKeysTimeRight[PinInputs::keyCountRight];
+  uint32_t activeKeysTimeLeft[PinInputs::keyCounts[LEFT]];
+  uint32_t activeKeysTimeRight[PinInputs::keyCounts[RIGHT]];
+  uint32_t* activeKeysTimes(int side) {
+    return side ? activeKeysTimeRight : activeKeysTimeLeft;
+  };
 
   // Indexed by midi. These a reference counted (so if multiple buttons activate the note, then that is tracked)
-  byte playingNotesLeft[127];
-  byte playingNotesRight[127];
+  byte playingNotes[2][127];
 };
 
 // State can be copied and checked for changes
@@ -42,13 +46,11 @@ struct State {
 
   // Pressures - converted using the gain
   float pressure = 0.0f;
-  float absPressure = 0.0f; // clamped to 0 and 1
-  float modifiedPressure = 0.0f; // clamped to 0 and 1
+  float absPressure = 0.0f;       // clamped to 0 and 1
+  float modifiedPressure = 0.0f;  // clamped to 0 and 1
 
-  int midiPanLeft = -1;
-  int midiPanRight = -1;
-  int midiVolumeLeft = -1; // scaled to 0-127
-  int midiVolumeRight = -1; // scaled to 0-127
+  int midiPans[2] = { -1, -1 };
+  int midiVolumes[2] = { -1, -1 };  // scaled to 0-127
 
   int rotaryEncoderPosition = 0;
   bool rotaryEncoderPressed = false;
