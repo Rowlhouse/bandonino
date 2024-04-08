@@ -109,7 +109,7 @@ std::vector<Page> sPages;
 
 // Track prev and current values to see if things need redrawing
 static int sPreviousPageIndex = -1;
-static int sCurrentPageIndex = Page::TYPE_PLAYING_NOTES;
+static int sCurrentPageIndex = 0;
 
 static int sPreviousOptionIndex = -1;
 static int sCurrentOptionIndex = 0;
@@ -248,8 +248,9 @@ void initMenu() {
   if (!settings.readFromCard("settings.json"))
     Serial.println("Failed to load settings");
 
-  sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
-  sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
+  // Not sure there's any merit to a blank page, since the display can be turned off by clicking
+  // sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
+
   sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
@@ -281,6 +282,11 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Load", &actionLoadSettings));
   sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
 
+  // This isn't useful at the moment - may kill it
+  sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
+
+  sCurrentPageIndex = 0;
+
   display.clearDisplay();
   display.display();
   display.setTextColor(settings.menuBrightness, 0x0);
@@ -309,29 +315,26 @@ void displayPlayingNotes(byte playingNotes[], int col, std::vector<int>& lastNot
       notes.push_back(i);
     }
   }
-
   if (notes == lastNotes)
     return;
 
   display.setTextSize(2);
-
   int row = 5;
-  for (size_t i = 0; i < notes.size(); ++i, --row) {
+  size_t num = std::max(notes.size(), lastNotes.size());
+  for (size_t i = 0; i < num; ++i, --row) {
     if (row <= 0)
       break;
     display.setCursor(col, sPageY + row * sCharHeight * 2);
-    display.printf("%-3s", midiNoteNames[notes[i]]);
-  }
-  for (size_t i = notes.size() ; i < lastNotes.size() ; ++i, --row)
-  {
-    if (row <= 0)
-      break;
-    display.setCursor(col, sPageY + row * sCharHeight * 2);
-    display.printf("   ");
+    if (i < notes.size()) {
+      display.printf("%-3s", midiNoteNames[notes[i]]);
+    } else {
+      display.printf("   ");
+    }
   }
   display.display();
-  lastNotes = notes;
   display.setTextSize(1);
+
+  lastNotes.swap(notes); // no memory copies or allocations
 }
 
 //====================================================================================================
@@ -350,9 +353,9 @@ void displayAllPlayingNotes() {
 //====================================================================================================
 void displayStatus(const State& state) {
   display.setCursor(0, sPageY + 1 * sCharHeight);
-  display.printf("Abs pressure %3.2f", state.absPressure);
-  display.setCursor(0, sPageY + 2 * sCharHeight);
-  display.printf("Mod pressure %3.2f", state.modifiedPressure);
+  display.printf("Abs pressure %3.2f\n", state.absPressure);
+  display.printf("Mod pressure %3.2f\n", state.modifiedPressure);
+  display.printf("FPS %3.1f\n", sSmoothedFPS);
   display.display();
 }
 
@@ -485,6 +488,7 @@ void updateMenu(Settings& settings, State& state) {
       Serial.println("Failed to write to settings.json");
   }
 
+  // If the page has changed, or we require a refresh, then display the page title
   if (sCurrentPageIndex != sPreviousPageIndex || sCurrentOptionIndex != sPreviousOptionIndex) {
     display.setTextColor(settings.menuBrightness, 0x0);
 
@@ -505,7 +509,8 @@ void updateMenu(Settings& settings, State& state) {
     return;
 
   // Now handle the live updating info
-  if (sCurrentPageIndex == Page::TYPE_SPLASH) {
+    const Page& page = currentPage();
+  if (page.mType == Page::TYPE_SPLASH) {
     uint32_t elapsedTime = millis() - sSplashTime;
     if (elapsedTime > SPLASH_DURATION && sDisplayEnabled) {
       sDisplayEnabled = false;
@@ -516,12 +521,12 @@ void updateMenu(Settings& settings, State& state) {
       overlayFPS();
       display.display();
     }
-  } else if (sCurrentPageIndex == Page::TYPE_PLAYING_NOTES) {
+  } else if (page.mType == Page::TYPE_PLAYING_NOTES) {
     displayAllPlayingNotes();
     if (settings.showFPS)
       overlayFPS();
     display.display();
-  } else if (sCurrentPageIndex == Page::TYPE_STATUS) {
+  } else if (page.mType == Page::TYPE_STATUS) {
     displayStatus(state);
     if (settings.showFPS)
       overlayFPS();
