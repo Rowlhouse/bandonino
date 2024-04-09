@@ -89,6 +89,8 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(pans[RIGHT]);
   WRITE_SETTING(levels[LEFT]);
   WRITE_SETTING(levels[RIGHT]);
+  WRITE_SETTING(showFPS);
+  WRITE_SETTING(menuBrightness);
   WRITE_SETTING(attack25);
   WRITE_SETTING(attack50);
   WRITE_SETTING(attack75);
@@ -139,11 +141,17 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(pans[RIGHT]);
   READ_SETTING(levels[LEFT]);
   READ_SETTING(levels[RIGHT]);
+  READ_SETTING(showFPS);
+  READ_SETTING(menuBrightness);
   READ_SETTING(attack25);
   READ_SETTING(attack50);
   READ_SETTING(attack75);
   READ_SETTING(midiMin);
   READ_SETTING(midiMax);
+
+  // Avoid problems reading bad data!
+  slot = std::clamp(slot, 0, 10);
+  menuBrightness = std::clamp(menuBrightness, 4, 16);
 
   file.close();
   Serial.printf("Settings read from %s\n", filename);

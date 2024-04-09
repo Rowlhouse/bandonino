@@ -59,16 +59,7 @@ void initKeys(byte activeKeys[], int keyCount) {
     activeKeys[iKey] = 0;
 }
 
-// LCD screen related variables
-byte upArrow[] = { B00100, B01110, B11111, B00100, B00100, B00100, B00100, B00000 };      // Define an up arrow glyph in binary to send to the LCD
-byte downArrow[] = { B00100, B00100, B00100, B00100, B11111, B01110, B00100, B00000 };    // Define a down arrow glyph in binary to send to the LCD
-byte recordLeft[] = { B00011, B01111, B01100, B11001, B11001, B01100, B01111, B00011 };   // Define left side of recording glyph in binary to send to the LCD
-byte recordRight[] = { B11000, B11110, B00110, B10011, B10011, B00110, B11110, B11000 };  // Define right side of recording glyph in binary to send to the LCD
-byte pauseLeft[] = { B00110, B00110, B00110, B00110, B00110, B00110, B00110, B00000 };    // Define left side of pause glyph in binary to send to the LCD
-byte pauseRight[] = { B01100, B01100, B01100, B01100, B01100, B01100, B01100, B00000 };   // Define right side of pause glyph in binary to send to the LCD
-byte loopLeft[] = { B00000, B00000, B00010, B00100, B00010, B00000, B00000, B00000 };     // Define left side of loop track active glyph in binary to send to the LCD
-byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00000 };    // Define right side of loop track active glyph in binary to send to the LCD
-
+// Used to force a periodic sync
 const int SYNC_VALUE = -1234;
 
 //====================================================================================================

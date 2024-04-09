@@ -1,9 +1,3 @@
-#include <avr/pgmspace.h>
-#include <core_pins.h>
-
-#include <algorithm>
-#include <vector>
-
 //====================================================================================================
 // 1327 128x128 Display
 //====================================================================================================
@@ -32,6 +26,11 @@ static const int sPageY = 16;
 #include "Settings.h"
 #include "State.h"
 #include "NoteNames.h"
+#include "Bitmaps.h"
+
+#include <algorithm>
+#include <vector>
+
 
 static bool sForceMenuRefresh = false;
 
@@ -92,6 +91,7 @@ struct Page {
     TYPE_SPLASH,
     TYPE_STATUS,
     TYPE_PLAYING_NOTES,
+    TYPE_PLAYING_STAFF,
     TYPE_BELLOWS,
     TYPE_OPTIONS
   };
@@ -253,6 +253,8 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
 
+  sPages.push_back(Page(Page::TYPE_PLAYING_STAFF, "", { Option(&actionToggleDisplay) }));
+
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3));
@@ -302,11 +304,14 @@ void initMenu() {
   display.display();
 }
 
-static std::vector<int> lastNotesLeft;
-static std::vector<int> lastNotesRight;
+static std::vector<int> sLastPlayingNotes[2];
 
 //====================================================================================================
-void displayPlayingNotes(byte playingNotes[], int col, std::vector<int>& lastNotes) {
+void displayPlayingNotes(int side) {
+  const int offset = 16;
+  int col = side ? 128 - offset - 3 * 2 * sCharWidth : offset;
+  byte* playingNotes = bigState.playingNotes[side];
+  std::vector<int>& lastNotes = sLastPlayingNotes[side];
 
   static std::vector<int> notes;
   notes.clear();
@@ -334,17 +339,176 @@ void displayPlayingNotes(byte playingNotes[], int col, std::vector<int>& lastNot
   display.display();
   display.setTextSize(1);
 
-  lastNotes.swap(notes); // no memory copies or allocations
+  lastNotes.swap(notes);  // no memory copies or allocations
 }
 
 //====================================================================================================
 void displayAllPlayingNotes() {
-  int offset = 16;
-  displayPlayingNotes(bigState.playingNotes[LEFT], offset, lastNotesLeft);
-  displayPlayingNotes(bigState.playingNotes[RIGHT], 128 - offset - 3 * 2 * sCharWidth, lastNotesRight);
+  displayPlayingNotes(LEFT);
+  displayPlayingNotes(RIGHT);
 
   // Also display pressure
-  display.setCursor(80, sPageY);
+  display.setCursor(75, sPageY);
+  static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
+  display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
+  display.display();
+}
+
+//====================================================================================================
+int convertToScreenY(int y) {
+  return 127 - y;
+}
+
+const int STAFF_LINE_SPACING = 8;
+const int STAFF_Y_START = 32;
+const int NOTE_X[2] = { 45, 108 };
+const int LEDGER_X[2] = { 39, 102 };
+const int LEDGER_WIDTH = 12;
+const int MAX_STAFF_LINE[2] = { 7, 8 };
+const int LEDGER_LINES_COLOUR = 0x8;
+const int STAFF_BITMAP_COLOUR = 0xff;
+
+// Record the last area plotted so we can quickly wipe it
+struct Area {
+  Area() {
+    Reset();
+  }
+
+  void Reset() {
+    mX0 = 127;
+    mX1 = 0;
+    mY0 = 127;
+    mY1 = 0;
+  }
+
+  void AddPoint(int x, int y) {
+    mX0 = std::min(mX0, x);
+    mX1 = std::max(mX1, x);
+    mY0 = std::min(mY0, y);
+    mY1 = std::max(mY1, y);
+  }
+
+  bool IsValid() const {
+    return mX1 > mX0 && mY1 > mY0;
+  }
+
+  uint16_t W() const {
+    return (uint16_t)(mX1 - mX0);
+  }
+  uint16_t H() const {
+    return (uint16_t)(mY1 - mY0);
+  }
+  uint16_t X() const {
+    return (uint16_t)mX0;
+  }
+  uint16_t Y() const {
+    return (uint16_t)mY0;
+  }
+
+  int mX0, mY0;
+  int mX1, mY1;
+};
+
+//====================================================================================================
+void drawStaffLines(int startLine, int endLine, int x, int width, uint16_t colour) {
+  for (int i = startLine; i <= endLine; ++i) {
+    int y = STAFF_Y_START + i * STAFF_LINE_SPACING;
+    display.drawFastHLine(x, convertToScreenY(y), width, colour);
+  }
+}
+
+//====================================================================================================
+void displayStaffPage() {
+  for (int j = 0; j != 2; ++j) {
+    drawStaffLines(-2, -1, LEDGER_X[j], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
+    drawStaffLines(5, MAX_STAFF_LINE[j], LEDGER_X[j], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
+  }
+  drawStaffLines(0, 4, 0, 128, STAFF_BITMAP_COLOUR);
+  display.drawBitmap(0, 0, ClefPage, 128, 128, STAFF_BITMAP_COLOUR);
+  display.display();
+}
+
+//====================================================================================================
+// x is in pixels. y is in numbers starting from the bottom staff (not ledger) line
+void drawNote(int x, int note, uint16_t colour, Area& area) {
+  // My y is the position of the bottom corner, starting from the bottom
+  int y = STAFF_Y_START + (STAFF_LINE_SPACING / 2) * note + NoteHeadOffsets[1];
+  int screenX = x + NoteHeadOffsets[0];
+  int screenY = convertToScreenY(y) - NoteHeadSize[1];
+  display.drawBitmap(screenX, screenY, NoteHeadSpace, NoteHeadSize[0], NoteHeadSize[1], colour);
+  area.AddPoint(screenX, screenY);
+  area.AddPoint(screenX + NoteHeadSize[0], screenY + NoteHeadSize[1]);
+}
+
+//====================================================================================================
+void drawAccidental(int x, int note, int accidental, uint16_t colour, Area& area) {
+  if (!accidental)
+    return;
+  const unsigned char* bitmap = accidental > 0 ? SharpSpace : FlatSpace;
+  const uint16_t* size = accidental > 0 ? SharpSize : FlatSize;
+  const int* offset = accidental > 0 ? SharpOffsets : FlatOffsets;
+
+  int screenX = x + offset[0];
+  int y = STAFF_Y_START + (STAFF_LINE_SPACING / 2) * note + offset[1] + size[1];
+  int screenY = convertToScreenY(y);
+
+  display.drawBitmap(screenX, screenY, bitmap, size[0], size[1], colour);
+  area.AddPoint(screenX, screenY);
+  area.AddPoint(screenX + size[0], screenY + size[1]);
+}
+
+static std::vector<int> sLastStaffNotes[2];
+static Area sLastAreas[2];
+
+//====================================================================================================
+void displayPlayingStaff(int side) {
+  const byte* playingNotes = bigState.playingNotes[side];
+  std::vector<int>& lastNotes = sLastPlayingNotes[side];
+  Area& area = sLastAreas[side];
+
+  static std::vector<int> notes;
+  notes.clear();
+  for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
+    if (playingNotes[i]) {
+      notes.push_back(i);
+    }
+  }
+  if (notes == lastNotes)
+    return;
+
+  // Wipe and refresh the area that was previously used
+  if (area.IsValid()) {
+    display.fillRect(area.X(), area.Y(), area.W(), area.H(), 0x0);
+    drawStaffLines(-2, -1, LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
+    drawStaffLines(0, 4, area.X(), area.W(), STAFF_BITMAP_COLOUR);
+    drawStaffLines(5, MAX_STAFF_LINE[side], LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
+  }
+  // displayStaffPage();
+
+  area.Reset();
+  uint16_t noteColour = 0xf;
+
+  for (size_t iNote = 0; iNote != notes.size(); ++iNote) {
+    int midiNote = notes[iNote];
+    NoteInfo noteInfo = getNoteInfo(midiNote, side);
+    drawNote(NOTE_X[side], noteInfo.mStavePosition, noteColour, area);
+    drawAccidental(NOTE_X[side], noteInfo.mStavePosition, noteInfo.mAccidental, noteColour, area);
+  }
+
+  // if (!notes.empty()){
+
+  // }
+
+  lastNotes.swap(notes);  // no memory copies or allocations
+}
+
+//====================================================================================================
+void displayPlayingStaffs() {
+  displayPlayingStaff(LEFT);
+  displayPlayingStaff(RIGHT);
+
+  // Also display pressure
+  display.setCursor(0, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
   display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
   display.display();
@@ -481,8 +645,8 @@ void updateMenu(Settings& settings, State& state) {
     }
   }
 
-  if (currentPage().mType == Page::TYPE_PLAYING_NOTES && sCurrentPageIndex < origPageIndex) {
-    // We have gone back through the options to "playing notes" - so save the settings
+  if (currentPage().mType != Page::TYPE_OPTIONS && sCurrentPageIndex != origPageIndex) {
+    // We have gone away from an options page so save things out
     Serial.println("Writing settings to settings.json");
     if (!settings.writeToCard("settings.json"))
       Serial.println("Failed to write to settings.json");
@@ -499,6 +663,9 @@ void updateMenu(Settings& settings, State& state) {
 
     const Page& page = currentPage();
     displayTitle(page.mTitle);
+    if (page.mType == Page::TYPE_PLAYING_STAFF) {
+      displayStaffPage();
+    }
     sSplashTime = millis();
     display.display();
     sPreviousOptionIndex = sCurrentOptionIndex;
@@ -509,7 +676,7 @@ void updateMenu(Settings& settings, State& state) {
     return;
 
   // Now handle the live updating info
-    const Page& page = currentPage();
+  const Page& page = currentPage();
   if (page.mType == Page::TYPE_SPLASH) {
     uint32_t elapsedTime = millis() - sSplashTime;
     if (elapsedTime > SPLASH_DURATION && sDisplayEnabled) {
@@ -523,6 +690,11 @@ void updateMenu(Settings& settings, State& state) {
     }
   } else if (page.mType == Page::TYPE_PLAYING_NOTES) {
     displayAllPlayingNotes();
+    if (settings.showFPS)
+      overlayFPS();
+    display.display();
+  } else if (page.mType == Page::TYPE_PLAYING_STAFF) {
+    displayPlayingStaffs();
     if (settings.showFPS)
       overlayFPS();
     display.display();

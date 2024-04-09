@@ -1,7 +1,11 @@
 #include "NoteNames.h"
 
+#include <Wire.h>
+
+// See https://newt.phys.unsw.edu.au/jw/graphics/notesinvert.GIF
+
 const char* midiNoteNames[] = {
-  "C0",
+  "C0",  // 0
   "C#0",
   "D0",
   "Eb0",
@@ -14,7 +18,7 @@ const char* midiNoteNames[] = {
   "Bb0",
   "B0",
 
-  "C1",
+  "C1",  // 12
   "C#1",
   "D1",
   "Eb1",
@@ -27,7 +31,7 @@ const char* midiNoteNames[] = {
   "Bb1",
   "B1",
 
-  "C2",
+  "C2",  // 24 - Cello C
   "C#2",
   "D2",
   "Eb2",
@@ -40,7 +44,7 @@ const char* midiNoteNames[] = {
   "Bb2",
   "B2",
 
-  "C3",
+  "C3",  // 36 - Viola C
   "C#3",
   "D3",
   "Eb3",
@@ -53,7 +57,7 @@ const char* midiNoteNames[] = {
   "Bb3",
   "B3",
 
-  "C4",
+  "C4",  // 48 - middle C
   "C#4",
   "D4",
   "Eb4",
@@ -66,7 +70,7 @@ const char* midiNoteNames[] = {
   "Bb4",
   "B4",
 
-  "C5",
+  "C5",  // 60
   "C#5",
   "D5",
   "Eb5",
@@ -79,7 +83,7 @@ const char* midiNoteNames[] = {
   "Bb5",
   "B5",
 
-  "C6",
+  "C6",  // 72
   "C#6",
   "D6",
   "Eb6",
@@ -92,7 +96,7 @@ const char* midiNoteNames[] = {
   "Bb6",
   "B6",
 
-  "C7",
+  "C7",  // 84
   "C#7",
   "D7",
   "Eb7",
@@ -105,7 +109,7 @@ const char* midiNoteNames[] = {
   "Bb7",
   "B7",
 
-  "C8",
+  "C8",  // 96
   "C#8",
   "D8",
   "Eb8",
@@ -118,7 +122,7 @@ const char* midiNoteNames[] = {
   "Bb8",
   "B8",
 
-  "C9",
+  "C9",  // 108
   "C#9",
   "D9",
   "Eb9",
@@ -131,7 +135,7 @@ const char* midiNoteNames[] = {
   "Bb9",
   "B9",
 
-  "C10",
+  "C10",  // 120
   "C#10",
   "D10",
   "Eb10",
@@ -144,3 +148,62 @@ const char* midiNoteNames[] = {
   "Bb10",
   "B10"
 };
+
+void getNoteOffset(int note, int& offset, int& accidental)
+{
+  switch (note) {
+    case 0:
+      offset = 0; accidental = 0;  break; // C
+    case 1:
+      offset = 0; accidental = 1;  break; // C#
+    case 2:
+      offset = 1; accidental = 0;  break; // D
+    case 3:
+      offset = 2; accidental = -1;  break; // Eb
+    case 4:
+      offset = 2; accidental = 0;  break; // E
+    case 5:
+      offset = 3; accidental = 0;  break; // F
+    case 6:
+      offset = 3; accidental = 1;  break; // F#
+    case 7:
+      offset = 4; accidental = 0;  break; // G
+    case 8:
+      offset = 4; accidental = 1;  break; // G#
+    case 9:
+      offset = 5; accidental = 0;  break; // A
+    case 10:
+      offset = 6; accidental = -1;  break; // Bb
+    case 11:
+      offset = 6; accidental = 0;  break; // B
+    default:
+    break;
+  }
+}
+
+//====================================================================================================
+NoteInfo getNoteInfo(int midi, int clef) {
+  NoteInfo result;
+  int refMidi = (clef == CLEF_BASS) ? 43 : 64;
+  int refNote = refMidi % 12;
+  int refOctave = refMidi / 12;
+  int refOffset = 0;
+  int refAccidental = 0;
+  getNoteOffset(refNote, refOffset, refAccidental);
+  int refHeight = refOffset + refOctave * 7;
+
+  Serial.printf("refMidi = %d\n", refMidi);
+
+  Serial.printf("Ref note %d octave %d height %d\n", refNote, refOctave, refHeight);
+
+  int note = midi % 12;
+  int octave = midi / 12;
+  int offset = 0;
+  getNoteOffset(note, offset, result.mAccidental);
+  int height = offset + octave * 7;
+
+  Serial.printf("Note %d octave %d height %d\n", note, octave, height);
+
+  result.mStavePosition = height - refHeight;
+  return result;
+}
