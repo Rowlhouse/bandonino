@@ -109,7 +109,6 @@ std::vector<Page> sPages;
 
 // Track prev and current values to see if things need redrawing
 static int sPreviousPageIndex = -1;
-static int sCurrentPageIndex = 0;
 
 static int sPreviousOptionIndex = -1;
 static int sCurrentOptionIndex = 0;
@@ -122,8 +121,6 @@ const uint32_t SPLASH_DURATION = 2000;
 
 static float sAverageFPS = 0;
 static float sWorstFPS = 0;
-
-bool sDisplayEnabled = true;
 
 //====================================================================================================
 void showMessage(const char* msg, int time) {
@@ -166,6 +163,13 @@ void zeroBellows() {
 //====================================================================================================
 void actionZeroBellows() {
   zeroBellows();
+}
+
+//====================================================================================================
+void saveSettings() {
+  Serial.println("Writing settings to settings.json");
+  if (!settings.writeToCard("settings.json"))
+    Serial.println("Failed to write to settings.json");
 }
 
 //====================================================================================================
@@ -212,14 +216,32 @@ void forceMenuRefresh() {
 }
 
 //====================================================================================================
-void actionToggleDisplay() {
-  if (sDisplayEnabled) {
-    sDisplayEnabled = false;
+void disableDisplay() {
+  if (settings.menuDisplayEnabled) {
+    settings.menuDisplayEnabled = false;
     display.clearDisplay();
     display.display();
-  } else {
-    sDisplayEnabled = true;
+    saveSettings();
+  }
+}
+
+//====================================================================================================
+void enableDisplay() {
+  if (!settings.menuDisplayEnabled) {
+    settings.menuDisplayEnabled = true;
     forceMenuRefresh();
+    saveSettings();
+  }
+}
+
+//====================================================================================================
+void actionToggleDisplay() {
+  if (settings.menuDisplayEnabled) {
+    Serial.println("Toggling display to off");
+    disableDisplay();
+  } else {
+    Serial.println("Toggling display to on");
+    enableDisplay();
   }
 }
 
@@ -288,7 +310,7 @@ void initMenu() {
   // This isn't useful at the moment - may kill it
   sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
 
-  sCurrentPageIndex = 0;
+  settings.menuPageIndex = std::clamp(settings.menuPageIndex, 0, (int)(sPages.size() - 1));
 
   display.clearDisplay();
   display.display();
@@ -303,6 +325,8 @@ void initMenu() {
 
   display.clearDisplay();
   display.display();
+  forceMenuRefresh();
+  ;
 }
 
 static std::vector<int> sLastPlayingNotes[2];
@@ -580,7 +604,7 @@ void displayOption(int pageIndex, int optionIndex, int row, bool highlightLeft, 
 
 //====================================================================================================
 Page& currentPage() {
-  return sPages[sCurrentPageIndex];
+  return sPages[settings.menuPageIndex];
 }
 
 //====================================================================================================
@@ -589,8 +613,7 @@ Option& currentOption() {
 }
 
 //====================================================================================================
-void updateFrameTiming()
-{
+void updateFrameTiming() {
   static uint32_t lastMicros = micros();
   int frameMicros = micros() - lastMicros;
   lastMicros += frameMicros;
@@ -603,9 +626,9 @@ void updateFrameTiming()
     sWorstFPS = 1000000.0f / worstFrameTimeMicros;
     sAverageFPS = 1000.0f * framesSinceLast / timeSinceFPS;
     lastFPSTime = state.loopStartTimeMillis;
-    Serial.printf("FPS %3.1f\n", sAverageFPS);
-    Serial.printf("Worst FPS %3.1f\n", sWorstFPS);
-    Serial.printf("Worst frame %3.1f\n", worstFrameTimeMicros / 1000.0f);
+    // Serial.printf("FPS %3.1f\n", sAverageFPS);
+    // Serial.printf("Worst FPS %3.1f\n", sWorstFPS);
+    // Serial.printf("Worst frame %3.1f\n", worstFrameTimeMicros / 1000.0f);
     framesSinceLast = 0;
     worstFrameTimeMicros = 0;
   } else {
@@ -633,10 +656,21 @@ void updateMenu(Settings& settings, State& state) {
     }
     if (currentOption().mAction) {
       currentOption().mAction();
+    } else {
+      // If there's no action, then force the display to come on in case we end
+      // up in an options list with the display off!
+      enableDisplay();
     }
   }
 
-  int origPageIndex = sCurrentPageIndex;
+  if (deltaRotaryEncoder)
+    enableDisplay();
+
+  // If display is disabled, then only respond to the click to wake it up
+  if (!settings.menuDisplayEnabled)
+    return;
+
+  int origPageIndex = settings.menuPageIndex;
   if (sAdjustOption) {
     if (deltaRotaryEncoder) {
       changedOption = true;
@@ -644,8 +678,8 @@ void updateMenu(Settings& settings, State& state) {
 
       if (sCurrentOptionIndex >= (int)currentPage().mOptions.size()) {
         // Jump to next page
-        if (sCurrentPageIndex + 1 < (int)sPages.size()) {
-          ++sCurrentPageIndex;
+        if (settings.menuPageIndex + 1 < (int)sPages.size()) {
+          ++settings.menuPageIndex;
           sCurrentOptionIndex = 0;
         } else {
           sCurrentOptionIndex = currentPage().mOptions.size() - 1;
@@ -653,9 +687,9 @@ void updateMenu(Settings& settings, State& state) {
       }
       if (sCurrentOptionIndex < 0) {
         // Jump to previous page
-        if (sCurrentPageIndex - 1 >= 0) {
-          --sCurrentPageIndex;
-          sCurrentOptionIndex = sPages[sCurrentPageIndex].mOptions.size() - 1;
+        if (settings.menuPageIndex - 1 >= 0) {
+          --settings.menuPageIndex;
+          sCurrentOptionIndex = sPages[settings.menuPageIndex].mOptions.size() - 1;
         } else {
           sCurrentOptionIndex = 0;
         }
@@ -680,20 +714,12 @@ void updateMenu(Settings& settings, State& state) {
     }
   }
 
-  if (currentPage().mType != Page::TYPE_OPTIONS && sCurrentPageIndex != origPageIndex) {
-    // We have gone away from an options page so save things out
-    Serial.println("Writing settings to settings.json");
-    if (!settings.writeToCard("settings.json"))
-      Serial.println("Failed to write to settings.json");
-  }
+  if (settings.menuPageIndex != origPageIndex)
+    saveSettings();
 
   // If the page has changed, or we require a refresh, then display the page title
-  if (sCurrentPageIndex != sPreviousPageIndex || sCurrentOptionIndex != sPreviousOptionIndex) {
+  if (settings.menuPageIndex != sPreviousPageIndex || sCurrentOptionIndex != sPreviousOptionIndex) {
     display.setTextColor(settings.menuBrightness, 0x0);
-
-    if (!sDisplayEnabled) {
-      sDisplayEnabled = true;
-    }
     display.clearDisplay();
 
     const Page& page = currentPage();
@@ -704,18 +730,15 @@ void updateMenu(Settings& settings, State& state) {
     sSplashTime = millis();
     display.display();
     sPreviousOptionIndex = sCurrentOptionIndex;
-    sPreviousPageIndex = sCurrentPageIndex;
+    sPreviousPageIndex = settings.menuPageIndex;
   }
-
-  if (!sDisplayEnabled)
-    return;
 
   // Now handle the live updating info
   const Page& page = currentPage();
   if (page.mType == Page::TYPE_SPLASH) {
     uint32_t elapsedTime = millis() - sSplashTime;
-    if (elapsedTime > SPLASH_DURATION && sDisplayEnabled) {
-      sDisplayEnabled = false;
+    if (elapsedTime > SPLASH_DURATION && settings.menuDisplayEnabled) {
+      settings.menuDisplayEnabled = false;
       display.clearDisplay();
       display.display();
     }
@@ -746,9 +769,9 @@ void updateMenu(Settings& settings, State& state) {
       int line = iOption - offset;
       if (line >= 0 && line <= maxLine) {
         if (iOption == sCurrentOptionIndex)
-          displayOption(sCurrentPageIndex, iOption, line + 2, sAdjustOption, !sAdjustOption);
+          displayOption(settings.menuPageIndex, iOption, line + 2, sAdjustOption, !sAdjustOption);
         else
-          displayOption(sCurrentPageIndex, iOption, line + 2, false, false);
+          displayOption(settings.menuPageIndex, iOption, line + 2, false, false);
       }
     }
     if (settings.showFPS)

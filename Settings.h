@@ -32,6 +32,9 @@ struct Settings {
   int showFPS = 0;
   int menuBrightness = 12; // 0 to 0xf
 
+  int  menuPageIndex = 0;
+  bool menuDisplayEnabled = true;
+
   // Shape the pressure response using attack params. As percentages
   int attack25 = 25;  // output when pressure = 25%
   int attack50 = 50;  // output when pressure = 50%
