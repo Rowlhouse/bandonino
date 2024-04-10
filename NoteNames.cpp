@@ -192,17 +192,11 @@ NoteInfo getNoteInfo(int midi, int clef) {
   getNoteOffset(refNote, refOffset, refAccidental);
   int refHeight = refOffset + refOctave * 7;
 
-  Serial.printf("refMidi = %d\n", refMidi);
-
-  Serial.printf("Ref note %d octave %d height %d\n", refNote, refOctave, refHeight);
-
   int note = midi % 12;
   int octave = midi / 12;
   int offset = 0;
   getNoteOffset(note, offset, result.mAccidental);
   int height = offset + octave * 7;
-
-  Serial.printf("Note %d octave %d height %d\n", note, octave, height);
 
   result.mStavePosition = height - refHeight;
   return result;

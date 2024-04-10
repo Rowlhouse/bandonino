@@ -120,7 +120,8 @@ static bool sAdjustOption = true;
 uint32_t sSplashTime = 0;  // When splash was triggered
 const uint32_t SPLASH_DURATION = 2000;
 
-static float sSmoothedFPS = 0;
+static float sAverageFPS = 0;
+static float sWorstFPS = 0;
 
 bool sDisplayEnabled = true;
 
@@ -235,7 +236,7 @@ void scrollInText(int x, int y, const char* text, int ms) {
 //====================================================================================================
 void overlayFPS(int x = 0, int y = 128 - sCharHeight) {
   display.setCursor(x, y);
-  display.printf("%5.1f ", sSmoothedFPS);
+  display.printf("%5.1f (%5.1f)", sAverageFPS, sWorstFPS);
 }
 
 //====================================================================================================
@@ -367,6 +368,7 @@ const int LEDGER_WIDTH = 12;
 const int MAX_STAFF_LINE[2] = { 7, 8 };
 const int LEDGER_LINES_COLOUR = 0x8;
 const int STAFF_BITMAP_COLOUR = 0xff;
+const int NOTE_COLOUR = 0xff;
 
 // Record the last area plotted so we can quickly wipe it
 struct Area {
@@ -382,21 +384,21 @@ struct Area {
   }
 
   void AddPoint(int x, int y) {
+    x = std::clamp(x, 0, 127);
+    y = std::clamp(y, 0, 127);
     mX0 = std::min(mX0, x);
     mX1 = std::max(mX1, x);
     mY0 = std::min(mY0, y);
     mY1 = std::max(mY1, y);
   }
-
   bool IsValid() const {
     return mX1 > mX0 && mY1 > mY0;
   }
-
   uint16_t W() const {
-    return (uint16_t)(mX1 - mX0);
+    return 1 + (uint16_t)(mX1 - mX0);  // When x1 = X0, that's a size of 1
   }
   uint16_t H() const {
-    return (uint16_t)(mY1 - mY0);
+    return 1 + (uint16_t)(mY1 - mY0);
   }
   uint16_t X() const {
     return (uint16_t)mX0;
@@ -410,19 +412,21 @@ struct Area {
 };
 
 //====================================================================================================
-void drawStaffLines(int startLine, int endLine, int x, int width, uint16_t colour) {
+void drawStaffLines(int startLine, int endLine, int x, int width, uint16_t colour, Area* area = nullptr) {
   for (int i = startLine; i <= endLine; ++i) {
     int y = STAFF_Y_START + i * STAFF_LINE_SPACING;
-    display.drawFastHLine(x, convertToScreenY(y), width, colour);
+    int screenY = convertToScreenY(y);
+    display.drawFastHLine(x, screenY, width, colour);
+    if (area) {
+      area->AddPoint(x, screenY);
+      area->AddPoint(x + width, screenY);
+    }
+    display.display();
   }
 }
 
 //====================================================================================================
 void displayStaffPage() {
-  for (int j = 0; j != 2; ++j) {
-    drawStaffLines(-2, -1, LEDGER_X[j], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
-    drawStaffLines(5, MAX_STAFF_LINE[j], LEDGER_X[j], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
-  }
   drawStaffLines(0, 4, 0, 128, STAFF_BITMAP_COLOUR);
   display.drawBitmap(0, 0, ClefPage, 128, 128, STAFF_BITMAP_COLOUR);
   display.display();
@@ -478,26 +482,35 @@ void displayPlayingStaff(int side) {
 
   // Wipe and refresh the area that was previously used
   if (area.IsValid()) {
-    display.fillRect(area.X(), area.Y(), area.W(), area.H(), 0x0);
-    drawStaffLines(-2, -1, LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
+    display.fillRect(area.X(), area.Y(), area.W(), area.H(), 0);
+    display.display();
     drawStaffLines(0, 4, area.X(), area.W(), STAFF_BITMAP_COLOUR);
-    drawStaffLines(5, MAX_STAFF_LINE[side], LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR);
   }
-  // displayStaffPage();
 
   area.Reset();
-  uint16_t noteColour = 0xf;
 
   for (size_t iNote = 0; iNote != notes.size(); ++iNote) {
     int midiNote = notes[iNote];
     NoteInfo noteInfo = getNoteInfo(midiNote, side);
-    drawNote(NOTE_X[side], noteInfo.mStavePosition, noteColour, area);
-    drawAccidental(NOTE_X[side], noteInfo.mStavePosition, noteInfo.mAccidental, noteColour, area);
+    drawNote(NOTE_X[side], noteInfo.mStavePosition, NOTE_COLOUR, area);
+    drawAccidental(NOTE_X[side], noteInfo.mStavePosition, noteInfo.mAccidental, NOTE_COLOUR, area);
+    display.display();
   }
 
-  // if (!notes.empty()){
-
-  // }
+  if (!notes.empty()) {
+    int lowestMidi = notes.front();
+    int highestMidi = notes.back();
+    NoteInfo lowestNoteInfo = getNoteInfo(lowestMidi, side);
+    NoteInfo highestNoteInfo = getNoteInfo(highestMidi, side);
+    int requiredLines = -lowestNoteInfo.mStavePosition / 2;
+    if (requiredLines > 0) {
+      drawStaffLines(-requiredLines, -1, LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR, &area);
+    }
+    requiredLines = (highestNoteInfo.mStavePosition / 2);
+    if (requiredLines > 4) {
+      drawStaffLines(5, requiredLines, LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR, &area);
+    }
+  }
 
   lastNotes.swap(notes);  // no memory copies or allocations
 }
@@ -519,7 +532,8 @@ void displayStatus(const State& state) {
   display.setCursor(0, sPageY + 1 * sCharHeight);
   display.printf("Abs pressure %3.2f\n", state.absPressure);
   display.printf("Mod pressure %3.2f\n", state.modifiedPressure);
-  display.printf("FPS %3.1f\n", sSmoothedFPS);
+  display.printf("FPS %3.1f\n", sAverageFPS);
+  display.printf("Worst FPS %3.1f\n", sWorstFPS);
   display.display();
 }
 
@@ -575,13 +589,34 @@ Option& currentOption() {
 }
 
 //====================================================================================================
-void updateMenu(Settings& settings, State& state) {
-  int deltaTime = (state.loopStartTimeMillis - prevState.loopStartTimeMillis);
-  if (deltaTime > 0) {
-    float fps = 1000.0f / deltaTime;
-    float f = 0.05f;
-    sSmoothedFPS += (fps - sSmoothedFPS) * f;
+void updateFrameTiming()
+{
+  static uint32_t lastMicros = micros();
+  int frameMicros = micros() - lastMicros;
+  lastMicros += frameMicros;
+
+  static int lastFPSTime = state.loopStartTimeMillis;
+  static int framesSinceLast = 0;
+  static int worstFrameTimeMicros = 0;
+  int timeSinceFPS = state.loopStartTimeMillis - lastFPSTime;
+  if (timeSinceFPS > 1000) {
+    sWorstFPS = 1000000.0f / worstFrameTimeMicros;
+    sAverageFPS = 1000.0f * framesSinceLast / timeSinceFPS;
+    lastFPSTime = state.loopStartTimeMillis;
+    Serial.printf("FPS %3.1f\n", sAverageFPS);
+    Serial.printf("Worst FPS %3.1f\n", sWorstFPS);
+    Serial.printf("Worst frame %3.1f\n", worstFrameTimeMicros / 1000.0f);
+    framesSinceLast = 0;
+    worstFrameTimeMicros = 0;
+  } else {
+    ++framesSinceLast;
+    worstFrameTimeMicros = std::max(worstFrameTimeMicros, frameMicros);
   }
+}
+
+//====================================================================================================
+void updateMenu(Settings& settings, State& state) {
+  updateFrameTiming();
 
   int deltaRotaryEncoder = state.rotaryEncoderPosition - prevState.rotaryEncoderPosition;
 
