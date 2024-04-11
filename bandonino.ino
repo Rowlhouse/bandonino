@@ -153,12 +153,14 @@ void readPressure() {
   }
   state.loadReading = loadcell.read();
 
+#if 0
   int col = 0;
   int row = 2;
   int iKey = INDEX_RIGHT(row, col);
   if (bigState.activeKeysRight[iKey]) {
     zeroBellows();
   }
+#endif
   state.pressure = -((state.loadReading - state.zeroLoadReading) * (settings.pressureGain / 100.0f)) / 500000.0f;
   // Serial.println(state.pressure);
 }

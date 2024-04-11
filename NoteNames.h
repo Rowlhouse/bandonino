@@ -18,6 +18,8 @@
 
 #define NOTE(note, octave) (octave * 12 + NOTE_##note)
 #define NOTE_UNUSED 0
+#define SKIPPED_KEY 0
+#define NOTE_BUTTON 0
 
 extern const char* midiNoteNames[];
 
