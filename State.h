@@ -51,6 +51,7 @@ struct State {
 
   int midiPans[2] = { -1, -1 };
   int midiVolumes[2] = { -1, -1 };  // scaled to 0-127
+  int midiInstruments[2] = { 1, 1 };
 
   int rotaryEncoderPosition = 0;
   bool rotaryEncoderPressed = false;

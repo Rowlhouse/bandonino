@@ -88,6 +88,8 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(debounceTime);
   WRITE_SETTING(midiChannels[LEFT]);
   WRITE_SETTING(midiChannels[RIGHT]);
+  WRITE_SETTING(midiInstruments[LEFT]);
+  WRITE_SETTING(midiInstruments[RIGHT]);
   WRITE_SETTING(metronomeEnabled);
   WRITE_SETTING(metronomeBeatsPerMinute);
   WRITE_SETTING(metronomeBeatsPerBar);
@@ -152,6 +154,8 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(debounceTime);
   READ_SETTING(midiChannels[LEFT]);
   READ_SETTING(midiChannels[RIGHT]);
+  READ_SETTING(midiInstruments[LEFT]);
+  READ_SETTING(midiInstruments[RIGHT]);
   // READ_SETTING(metronomeEnabled); Never automatically turn it on
   READ_SETTING(metronomeBeatsPerMinute);
   READ_SETTING(metronomeBeatsPerBar);

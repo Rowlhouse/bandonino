@@ -33,9 +33,9 @@ void updateMetronome() {
     return;
   }
 
-  if (settings.metronomeMidiInstrument != sPreviousInstrument)
-  {
-    usbMIDI.sendProgramChange(settings.metronomeMidiInstrument, settings.metronomeMidiChannel);
+  if (settings.metronomeMidiInstrument != sPreviousInstrument) {
+    if (settings.metronomeMidiInstrument != 0)
+      usbMIDI.sendProgramChange(settings.metronomeMidiInstrument, settings.metronomeMidiChannel);
     sPreviousInstrument = settings.metronomeMidiInstrument;
   }
 

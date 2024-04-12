@@ -43,14 +43,14 @@ struct Option {
     TYPE_NONE
   };
 
-  Option(const char* name, int* value, int minValue, int maxValue, int deltaValue, Action action = nullptr)
-    : mType(TYPE_OPTION), mName(name), mIntValue(value), mIntMinValue(minValue), mIntMaxValue(maxValue), mIntDeltaValue(deltaValue), mAction(action) {}
+  Option(const char* name, int* value, int minValue, int maxValue, int deltaValue, bool wrap = false, Action action = nullptr)
+    : mType(TYPE_OPTION), mName(name), mIntValue(value), mIntMinValue(minValue), mIntMaxValue(maxValue), mIntDeltaValue(deltaValue), mWrap(wrap), mAction(action) {}
 
   Option(const char* name, int* value, const char** valueStrings, int numStrings, Action action = nullptr)
-    : mType(TYPE_OPTION), mName(name), mValueStrings(valueStrings), mIntValue(value), mIntMinValue(0), mIntMaxValue(numStrings - 1), mIntDeltaValue(1), mAction(action) {}
+    : mType(TYPE_OPTION), mName(name), mValueStrings(valueStrings), mIntValue(value), mIntMinValue(0), mIntMaxValue(numStrings - 1), mIntDeltaValue(1), mWrap(true), mAction(action) {}
 
   Option(const char* name, float* value, float minValue, float maxValue, float deltaValue, Action action = nullptr)
-    : mType(TYPE_OPTION), mName(name), mFloatValue(value), mFloatMinValue(minValue), mFloatMaxValue(maxValue), mFloatDeltaValue(deltaValue), mAction(action) {}
+    : mType(TYPE_OPTION), mName(name), mFloatValue(value), mFloatMinValue(minValue), mFloatMaxValue(maxValue), mFloatDeltaValue(deltaValue), mWrap(false), mAction(action) {}
 
   Option(const char* name, Action action)
     : mType(TYPE_ACTION), mName(name), mAction(action) {}
@@ -72,6 +72,8 @@ struct Option {
   float mFloatMinValue = 0;
   float mFloatMaxValue = 0;
   float mFloatDeltaValue = 0;
+
+  bool mWrap = false;
 
   Action mAction = nullptr;
 };
@@ -286,35 +288,37 @@ void initMenu() {
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3));
-  sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 10, 200, 10));
+  sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 10, 200, 10, false));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1));
+  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[LEFT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[RIGHT], gExpressionTypes, EXPRESSION_TYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1));
+  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[RIGHT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
-  sPages.back().mOptions.push_back(Option("Enable", &actionToggleMetronome));
-  sPages.back().mOptions.push_back(Option("Beats/min", &settings.metronomeBeatsPerMinute, 20, 200, 1));
-  sPages.back().mOptions.push_back(Option("Beats/bar", &settings.metronomeBeatsPerBar, 1, 10, 1));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.metronomeVolume, 0, 100, 5));
-  sPages.back().mOptions.push_back(Option("Note 1", &settings.metronomeMidiNotePrimary, 1, 127, 1));
-  sPages.back().mOptions.push_back(Option("Note 2", &settings.metronomeMidiNoteSecondary, 1, 127, 1));
-  sPages.back().mOptions.push_back(Option("Instrument", &settings.metronomeMidiInstrument, 1, 127, 1));
+  sPages.back().mOptions.push_back(Option("Toggle", &actionToggleMetronome));
+  sPages.back().mOptions.push_back(Option("Beats/min", &settings.metronomeBeatsPerMinute, 20, 200, 1, false));
+  sPages.back().mOptions.push_back(Option("Beats/bar", &settings.metronomeBeatsPerBar, 1, 10, 1, false));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.metronomeVolume, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Note 1", &settings.metronomeMidiNotePrimary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Note 2", &settings.metronomeMidiNoteSecondary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &settings.metronomeMidiInstrument, 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, &forceMenuRefresh));
+  sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Settings", {}));
@@ -654,6 +658,17 @@ void updateFrameTiming() {
 }
 
 //====================================================================================================
+template<typename T>
+T wrap(const T& value, const T& minValue, const T& maxValue) {
+  const T delta = maxValue - minValue;
+  if (value < minValue)
+    return value + (delta + 1);
+  if (value > maxValue)
+    return value - (delta + 1);
+  return value;
+}
+
+//====================================================================================================
 void updateMenu(Settings& settings, State& state) {
   updateFrameTiming();
 
@@ -718,10 +733,16 @@ void updateMenu(Settings& settings, State& state) {
         changedValue = true;
         if (option.mIntValue) {
           *option.mIntValue += option.mIntDeltaValue * deltaRotaryEncoder;
-          *option.mIntValue = std::clamp(*option.mIntValue, option.mIntMinValue, option.mIntMaxValue);
+          if (option.mWrap)
+            *option.mIntValue = wrap(*option.mIntValue, option.mIntMinValue, option.mIntMaxValue);
+          else
+            *option.mIntValue = std::clamp(*option.mIntValue, option.mIntMinValue, option.mIntMaxValue);
         } else if (option.mFloatValue) {
           *option.mFloatValue += option.mFloatDeltaValue * deltaRotaryEncoder;
-          *option.mFloatValue = std::clamp(*option.mFloatValue, option.mFloatMinValue, option.mFloatMaxValue);
+          if (option.mWrap)
+            *option.mFloatValue = wrap(*option.mFloatValue, option.mFloatMinValue, option.mFloatMaxValue);
+          else
+            *option.mFloatValue = std::clamp(*option.mFloatValue, option.mFloatMinValue, option.mFloatMaxValue);
         }
         if (currentOption().mAction) {
           currentOption().mAction();

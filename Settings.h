@@ -23,6 +23,7 @@ struct Settings {
   uint32_t debounceTime = 10;  // milliseconds
 
   int midiChannels[2] = {1, 2};
+  int midiInstruments[2] = {0, 0}; // 0 means don't send - let the playback system decide
 
   bool metronomeEnabled = false;
   int metronomeBeatsPerMinute = 100;
