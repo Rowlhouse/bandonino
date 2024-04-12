@@ -1,7 +1,7 @@
 #ifndef NOTELAYOUTS_H
 #define NOTELAYOUTS_H
 
-#include <wiring.h>
+#include <stdint.h>
 
 struct Settings;
 
@@ -18,14 +18,14 @@ enum { LEFT,
        RIGHT };
 
 struct NoteLayout {
-  const byte* leftOpen = nullptr;
-  const byte* rightOpen = nullptr;
-  const byte* leftClose = nullptr;
-  const byte* rightClose = nullptr;
-  const byte* open(int side) {
+  const uint8_t* leftOpen = nullptr;
+  const uint8_t* rightOpen = nullptr;
+  const uint8_t* leftClose = nullptr;
+  const uint8_t* rightClose = nullptr;
+  const uint8_t* open(int side) {
     return side ? rightOpen : leftOpen;
   }
-  const byte* close(int side) {
+  const uint8_t* close(int side) {
     return side ? rightClose : leftClose;
   }
   const char* name = "none";

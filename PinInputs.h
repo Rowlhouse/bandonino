@@ -1,21 +1,21 @@
 #ifndef PININPUTS_H
 #define PININPUTS_H
 
-#include <wiring.h>
+#include <stdint.h>
 
 struct PinInputs {
   static constexpr int rowCounts[2] = { 8, 8 };
   static constexpr int columnCounts[2] = { 5, 6 };
 
-  static constexpr byte columnPinsLeft[columnCounts[0]] = { 5, 4, 3, 2, 0 };
-  static constexpr byte columnPinsRight[columnCounts[1]] = { 11, 10, 9, 8, 7, 6 };
-  static constexpr byte rowPinsLeft[rowCounts[0]] = { 32, 31, 30, 29, 28, 27, 26, 25 };
-  static constexpr byte rowPinsRight[rowCounts[1]] = { 40, 39, 38, 37, 36, 35, 34, 33 };
+  static constexpr uint8_t columnPinsLeft[columnCounts[0]] = { 5, 4, 3, 2, 0 };
+  static constexpr uint8_t columnPinsRight[columnCounts[1]] = { 11, 10, 9, 8, 7, 6 };
+  static constexpr uint8_t rowPinsLeft[rowCounts[0]] = { 32, 31, 30, 29, 28, 27, 26, 25 };
+  static constexpr uint8_t rowPinsRight[rowCounts[1]] = { 40, 39, 38, 37, 36, 35, 34, 33 };
 
-  static const byte* columnPins(int side) {
+  static const uint8_t* columnPins(int side) {
     return side ? columnPinsRight : columnPinsLeft;
   }
-  static const byte* rowPins(int side) {
+  static const uint8_t* rowPins(int side) {
     return side ? rowPinsRight : rowPinsLeft;
   }
 

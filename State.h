@@ -4,8 +4,6 @@
 #include "NoteLayouts.h"
 #include "PinInputs.h"
 
-#include <wiring.h>
-
 struct Settings;
 
 // Big state - don't copy
@@ -13,15 +11,15 @@ struct BigState {
   // The actual note layout
   NoteLayout noteLayout;
 
-  byte activeKeysLeft[PinInputs::keyCounts[LEFT]];
-  byte activeKeysRight[PinInputs::keyCounts[RIGHT]];
-  byte* activeKeys(int side) {
+  uint8_t activeKeysLeft[PinInputs::keyCounts[LEFT]];
+  uint8_t activeKeysRight[PinInputs::keyCounts[RIGHT]];
+  uint8_t* activeKeys(int side) {
     return side ? activeKeysRight : activeKeysLeft;
   };
 
-  byte previousActiveKeysLeft[PinInputs::keyCounts[LEFT]];
-  byte previousActiveKeysRight[PinInputs::keyCounts[RIGHT]];
-  byte* previousActiveKeys(int side) {
+  uint8_t previousActiveKeysLeft[PinInputs::keyCounts[LEFT]];
+  uint8_t previousActiveKeysRight[PinInputs::keyCounts[RIGHT]];
+  uint8_t* previousActiveKeys(int side) {
     return side ? previousActiveKeysRight : previousActiveKeysLeft;
   };
 
@@ -32,7 +30,7 @@ struct BigState {
   };
 
   // Indexed by midi. These a reference counted (so if multiple buttons activate the note, then that is tracked)
-  byte playingNotes[2][127];
+  uint8_t playingNotes[2][127];
 };
 
 // State can be copied and checked for changes

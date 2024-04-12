@@ -1,6 +1,8 @@
 //====================================================================================================
 // 1327 128x128 Display
 //====================================================================================================
+// https://github.com/adafruit/Adafruit_SSD1327
+// v 1.0.4
 #include <Adafruit_SSD1327.h>
 #define I2C_ADDRESS 0x3D
 #define OLED_RESET -1
@@ -406,14 +408,15 @@ int convertToScreenY(int y) {
 
 const int STAFF_LINE_SPACING = 8;
 const int STAFF_Y_START = 32;
-const int NOTE_X[2] = { 45, 108 };
-const int LEDGER_X[2] = { 39, 102 };
+const int NOTE_X[2] = { 47, 110 };
+const int LEDGER_X[2] = { 41, 104 };
 const int LEDGER_WIDTH = 12;
 const int MAX_STAFF_LINE[2] = { 7, 8 };
 const int LEDGER_LINES_COLOUR = 0x8;
 const int STAFF_BITMAP_COLOUR = 0xff;
 const int NOTE_COLOUR = 0xff;
 
+//====================================================================================================
 // Record the last area plotted so we can quickly wipe it
 struct Area {
   Area() {
@@ -451,8 +454,7 @@ struct Area {
     return (uint16_t)mY0;
   }
 
-  int mX0, mY0;
-  int mX1, mY1;
+  int mX0, mY0, mX1, mY1;
 };
 
 //====================================================================================================
@@ -533,12 +535,26 @@ void displayPlayingStaff(int side) {
 
   area.Reset();
 
+  // How to display "crunchy" chords?
+  // The book "Music Notation" by Gardner Read, second edition:
+  // The interval of a second... should be written with the stem between the note-heads. The higher pitch is always placed to the right.
+  // If there is a crunch, then the notes should alternate left right
+  bool prevPushedSideways = false;
+  NoteInfo prevNoteInfo(-999, 0);
   for (size_t iNote = 0; iNote != notes.size(); ++iNote) {
+    int pushOffset = 0;
     int midiNote = notes[iNote];
     NoteInfo noteInfo = getNoteInfo(midiNote, side);
-    drawNote(NOTE_X[side], noteInfo.mStavePosition, NOTE_COLOUR, area);
-    drawAccidental(NOTE_X[side], noteInfo.mStavePosition, noteInfo.mAccidental, NOTE_COLOUR, area);
+    if (prevNoteInfo.mStavePosition + 1 >= noteInfo.mStavePosition && !prevPushedSideways) {
+      pushOffset = 6;
+      prevPushedSideways = true;
+    } else {
+      prevPushedSideways = false;
+    }
+    drawNote(NOTE_X[side] + pushOffset, noteInfo.mStavePosition, NOTE_COLOUR, area);
+    drawAccidental(NOTE_X[side] + pushOffset, noteInfo.mStavePosition, noteInfo.mAccidental, NOTE_COLOUR, area);
     display.display();
+    prevNoteInfo = noteInfo;
   }
 
   if (!notes.empty()) {

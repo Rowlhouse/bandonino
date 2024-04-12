@@ -3,7 +3,7 @@
 
 #include "NoteLayouts.h"
 
-#include <wiring.h>
+#include <stdint.h>
 
 enum ExpressionType {
   EXPRESSION_TYPE_VOLUME,
@@ -52,8 +52,8 @@ struct Settings {
   int attack75 = 75;  // output when pressure = 75%
 
   // Things below here are updated automatically
-  byte midiMin = 0;
-  byte midiMax = 127;
+  uint8_t midiMin = 0;
+  uint8_t midiMax = 127;
 
   // Call this to limit the range of midi notes we traverse after changing the layout
   void updateMIDIRange();

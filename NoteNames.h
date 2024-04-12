@@ -23,14 +23,16 @@
 
 extern const char* midiNoteNames[];
 
-enum Clef
-{
-  CLEF_BASS, CLEF_TREBLE
+enum Clef {
+  CLEF_BASS,
+  CLEF_TREBLE
 };
-struct NoteInfo
-{
-  int  mStavePosition;
-  int  mAccidental;
+
+struct NoteInfo {
+  NoteInfo(int stavePosition = 0, int accidental = 0)
+    : mStavePosition(stavePosition), mAccidental(accidental) {}
+  int mStavePosition;
+  int mAccidental;
 };
 NoteInfo getNoteInfo(int midiNote, int clef);
 
