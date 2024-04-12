@@ -246,6 +246,11 @@ void actionToggleDisplay() {
 }
 
 //====================================================================================================
+void actionToggleMetronome() {
+  settings.metronomeEnabled = !settings.metronomeEnabled;
+}
+
+//====================================================================================================
 void scrollInText(int x, int y, const char* text, int ms) {
   for (int x1 = 128; --x1 >= x;) {
     display.setCursor(x1, y);
@@ -295,6 +300,15 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[RIGHT], gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5));
+
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
+  sPages.back().mOptions.push_back(Option("Enable", &actionToggleMetronome));
+  sPages.back().mOptions.push_back(Option("Beats/min", &settings.metronomeBeatsPerMinute, 20, 200, 1));
+  sPages.back().mOptions.push_back(Option("Beats/bar", &settings.metronomeBeatsPerBar, 1, 10, 1));
+  sPages.back().mOptions.push_back(Option("Volume", &settings.metronomeVolume, 0, 100, 5));
+  sPages.back().mOptions.push_back(Option("Note 1", &settings.metronomeMidiNotePrimary, 1, 127, 1));
+  sPages.back().mOptions.push_back(Option("Note 2", &settings.metronomeMidiNoteSecondary, 1, 127, 1));
+  sPages.back().mOptions.push_back(Option("Instrument", &settings.metronomeMidiInstrument, 1, 127, 1));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM));

@@ -3,6 +3,7 @@
 #include "PinInputs.h"
 #include "State.h"
 
+// https://arduinojson.org/
 #include <ArduinoJson.h>
 #include <SD.h>
 #include <SPI.h>
@@ -81,10 +82,20 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(forceBellows);
   WRITE_SETTING(expressionTypes[LEFT]);
   WRITE_SETTING(expressionTypes[RIGHT]);
+  WRITE_SETTING(maxVelocity[LEFT]);
+  WRITE_SETTING(maxVelocity[RIGHT]);
   WRITE_SETTING(pressureGain);
   WRITE_SETTING(debounceTime);
   WRITE_SETTING(midiChannels[LEFT]);
   WRITE_SETTING(midiChannels[RIGHT]);
+  WRITE_SETTING(metronomeEnabled);
+  WRITE_SETTING(metronomeBeatsPerMinute);
+  WRITE_SETTING(metronomeBeatsPerBar);
+  WRITE_SETTING(metronomeVolume);
+  WRITE_SETTING(metronomeMidiNotePrimary);
+  WRITE_SETTING(metronomeMidiNoteSecondary);
+  WRITE_SETTING(metronomeMidiChannel);
+  WRITE_SETTING(metronomeMidiInstrument);
   WRITE_SETTING(pans[LEFT]);
   WRITE_SETTING(pans[RIGHT]);
   WRITE_SETTING(levels[LEFT]);
@@ -128,17 +139,27 @@ bool Settings::readFromCard(const char* filename) {
     return false;
   }
 
-#define READ_SETTING(x) x = doc[#x];
+#define READ_SETTING(x) x = doc[#x] | x
 
   READ_SETTING(slot);
   READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
   READ_SETTING(expressionTypes[LEFT]);
   READ_SETTING(expressionTypes[RIGHT]);
+  READ_SETTING(maxVelocity[LEFT]);
+  READ_SETTING(maxVelocity[RIGHT]);
   READ_SETTING(pressureGain);
   READ_SETTING(debounceTime);
   READ_SETTING(midiChannels[LEFT]);
   READ_SETTING(midiChannels[RIGHT]);
+  // READ_SETTING(metronomeEnabled); Never automatically turn it on
+  READ_SETTING(metronomeBeatsPerMinute);
+  READ_SETTING(metronomeBeatsPerBar);
+  READ_SETTING(metronomeVolume);
+  READ_SETTING(metronomeMidiNotePrimary);
+  READ_SETTING(metronomeMidiNoteSecondary);
+  READ_SETTING(metronomeMidiChannel);
+  READ_SETTING(metronomeMidiInstrument);
   READ_SETTING(pans[LEFT]);
   READ_SETTING(pans[RIGHT]);
   READ_SETTING(levels[LEFT]);

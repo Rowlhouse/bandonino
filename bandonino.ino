@@ -10,6 +10,7 @@
 #include "Settings.h"
 #include "State.h"
 #include "Menu.h"
+#include "Metronome.h"
 
 BigState bigState;
 State state;
@@ -142,6 +143,8 @@ void loop() {
   updatePan();
 
   playAllButtons();
+
+  updateMetronome();
 
   if (runHardwareTest)
     hardwareTest();
@@ -312,8 +315,8 @@ void playButtons(
 //====================================================================================================
 int getVelocity(int side) {
   if (settings.expressionTypes[side] == EXPRESSION_TYPE_VOLUME)
-    return 0x7f;
-  return convertPercentToMidi(state.modifiedPressure * settings.levels[side]);
+    return settings.maxVelocity[side];
+  return convertFractionToMidi(state.modifiedPressure * (settings.levels[side] / 100.0f) * (settings.maxVelocity[side] / 127.0f));
 }
 
 //====================================================================================================

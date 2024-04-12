@@ -18,10 +18,20 @@ struct Settings {
   int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressionTypes[2] = {EXPRESSION_TYPE_VOLUME, EXPRESSION_TYPE_VOLUME};
+  int maxVelocity[2] = {126, 126};
 
   uint32_t debounceTime = 10;  // milliseconds
 
   int midiChannels[2] = {1, 2};
+
+  bool metronomeEnabled = false;
+  int metronomeBeatsPerMinute = 100;
+  int metronomeBeatsPerBar = 4;
+  int metronomeVolume = 100;
+  int metronomeMidiNotePrimary = 60;
+  int metronomeMidiNoteSecondary = 80;
+  int metronomeMidiChannel = 3;
+  int metronomeMidiInstrument = 115; // Appears to be woodblock
 
   // percentages between -100 and 100
   int pans[2] = {-25, 25};
