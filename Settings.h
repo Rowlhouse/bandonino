@@ -27,7 +27,7 @@ struct Settings {
   bool metronomeEnabled = false;
   int metronomeBeatsPerMinute = 100;
   int metronomeBeatsPerBar = 4;
-  int metronomeVolume = 100;
+  int metronomeVolume = 50;
   int metronomeMidiNotePrimary = 60;
   int metronomeMidiNoteSecondary = 80;
   int metronomeMidiChannel = 3;

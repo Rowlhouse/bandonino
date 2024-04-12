@@ -295,11 +295,13 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5));
+  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
   sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[RIGHT], gExpressionTypes, EXPRESSION_TYPE_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5));
+  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
   sPages.back().mOptions.push_back(Option("Enable", &actionToggleMetronome));
