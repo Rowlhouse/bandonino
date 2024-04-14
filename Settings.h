@@ -19,6 +19,7 @@ struct Settings {
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressionTypes[2] = {EXPRESSION_TYPE_VOLUME, EXPRESSION_TYPE_VOLUME};
   int maxVelocity[2] = {126, 126};
+  int transpose = 0;
 
   uint32_t debounceTime = 0;  // milliseconds. Turns out not to be very helpful
 

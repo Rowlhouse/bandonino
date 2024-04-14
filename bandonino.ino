@@ -257,8 +257,8 @@ void updateMidi() {
 }
 
 //====================================================================================================
-void playNote(byte midiNote, byte velocity, const int midiChannel, byte playingNotes[]) {
-  if (midiNote > 0) {
+void playNote(int midiNote, byte velocity, const int midiChannel, byte playingNotes[]) {
+  if (midiNote > 0 && midiNote <= 127) {
     usbMIDI.sendNoteOn(midiNote, velocity, midiChannel);
     if (velocity > 0) {
       ++playingNotes[midiNote];
@@ -267,8 +267,8 @@ void playNote(byte midiNote, byte velocity, const int midiChannel, byte playingN
 }
 
 //====================================================================================================
-void stopNote(byte midiNote, byte velocity, const int midiChannel, byte playingNotes[]) {
-  if (midiNote > 0) {
+void stopNote(int midiNote, byte velocity, const int midiChannel, byte playingNotes[]) {
+  if (midiNote > 0 && midiNote <= 127) {
     if (playingNotes[midiNote] > 0)
       --playingNotes[midiNote];
     if (playingNotes[midiNote] <= 0)
@@ -290,6 +290,20 @@ void stopAllNotes() {
 }
 
 //====================================================================================================
+int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayoutClose) {
+  if (state.bellowsOpening == 0)
+    return -1;
+  int midiNote = state.bellowsOpening > 0 ? noteLayoutOpen[iKey] : noteLayoutClose[iKey];
+  if (midiNote > 0 && midiNote <= 127) {
+    midiNote += settings.transpose;
+    if (midiNote > 0 && midiNote <= 127) {
+      return midiNote;
+    }
+    return -1;
+  }
+}
+
+//====================================================================================================
 void playButtons(
   const byte activeKeys[],
   byte previousActiveKeys[],
@@ -302,18 +316,10 @@ void playButtons(
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
       // Start playing
-      if (state.bellowsOpening > 0)
-        playNote(noteLayoutOpen[iKey], velocity, midiChannel, playingNotes);
-      else if (state.bellowsOpening < 0)
-        playNote(noteLayoutClose[iKey], velocity, midiChannel, playingNotes);
-      else
-        continue;
+      playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose), velocity, midiChannel, playingNotes);
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
       // Stop playing
-      if (state.bellowsOpening > 0)
-        stopNote(noteLayoutOpen[iKey], 0x00, midiChannel, playingNotes);
-      else if (state.bellowsOpening < 0)
-        stopNote(noteLayoutClose[iKey], 0x00, midiChannel, playingNotes);
+      stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose), 0, midiChannel, playingNotes);
     }
     previousActiveKeys[iKey] = activeKeys[iKey];
   }

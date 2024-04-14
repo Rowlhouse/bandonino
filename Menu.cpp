@@ -320,6 +320,7 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Debounce", &settings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
