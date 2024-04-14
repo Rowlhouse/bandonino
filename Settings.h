@@ -20,7 +20,7 @@ struct Settings {
   int expressionTypes[2] = {EXPRESSION_TYPE_VOLUME, EXPRESSION_TYPE_VOLUME};
   int maxVelocity[2] = {126, 126};
 
-  uint32_t debounceTime = 10;  // milliseconds
+  uint32_t debounceTime = 0;  // milliseconds. Turns out not to be very helpful
 
   int midiChannels[2] = {1, 2};
   int midiInstruments[2] = {0, 0}; // 0 means don't send - let the playback system decide
