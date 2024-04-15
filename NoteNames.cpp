@@ -5,7 +5,19 @@
 // See https://newt.phys.unsw.edu.au/jw/graphics/notesinvert.GIF
 
 const char* midiNoteNames[] = {
-  "C0",  // 0
+  "NaN",  // 0
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "NaN",
+  "C0",  // 12
   "C#0",
   "D0",
   "Eb0",
@@ -17,8 +29,7 @@ const char* midiNoteNames[] = {
   "A0",
   "Bb0",
   "B0",
-
-  "C1",  // 12
+  "C1",  // 24
   "C#1",
   "D1",
   "Eb1",
@@ -30,8 +41,7 @@ const char* midiNoteNames[] = {
   "A1",
   "Bb1",
   "B1",
-
-  "C2",  // 24 - Cello C
+  "C2",  // 36 - Cello C
   "C#2",
   "D2",
   "Eb2",
@@ -43,8 +53,7 @@ const char* midiNoteNames[] = {
   "A2",
   "Bb2",
   "B2",
-
-  "C3",  // 36 - Viola C
+  "C3",  // 48 - Viola C
   "C#3",
   "D3",
   "Eb3",
@@ -56,8 +65,7 @@ const char* midiNoteNames[] = {
   "A3",
   "Bb3",
   "B3",
-
-  "C4",  // 48 - middle C
+  "C4",  // 60 - middle C
   "C#4",
   "D4",
   "Eb4",
@@ -69,8 +77,7 @@ const char* midiNoteNames[] = {
   "A4",
   "Bb4",
   "B4",
-
-  "C5",  // 60
+  "C5",  // 72
   "C#5",
   "D5",
   "Eb5",
@@ -82,8 +89,7 @@ const char* midiNoteNames[] = {
   "A5",
   "Bb5",
   "B5",
-
-  "C6",  // 72
+  "C6",  // 84
   "C#6",
   "D6",
   "Eb6",
@@ -95,8 +101,7 @@ const char* midiNoteNames[] = {
   "A6",
   "Bb6",
   "B6",
-
-  "C7",  // 84
+  "C7",  // 96
   "C#7",
   "D7",
   "Eb7",
@@ -108,8 +113,7 @@ const char* midiNoteNames[] = {
   "A7",
   "Bb7",
   "B7",
-
-  "C8",  // 96
+  "C8",  // 108
   "C#8",
   "D8",
   "Eb8",
@@ -121,8 +125,7 @@ const char* midiNoteNames[] = {
   "A8",
   "Bb8",
   "B8",
-
-  "C9",  // 108
+  "C9",  // 120
   "C#9",
   "D9",
   "Eb9",
@@ -134,19 +137,6 @@ const char* midiNoteNames[] = {
   "A9",
   "Bb9",
   "B9",
-
-  "C10",  // 120
-  "C#10",
-  "D10",
-  "Eb10",
-  "E10",
-  "F10",
-  "F#10",
-  "G10",
-  "G#10",
-  "A10",
-  "Bb10",
-  "B10"
 };
 
 void getNoteOffset(int note, int& offset, int& accidental)

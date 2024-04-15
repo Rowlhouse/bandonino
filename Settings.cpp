@@ -12,8 +12,12 @@
 
 Settings settings;
 
-const char* gExpressionTypes[] = {
+const char* gExpressionNames[] = {
   "Volume", "Velocity"
+};
+
+const char* gNoteDisplayNames[] = {
+  "Stacked", "Placed"
 };
 
 //====================================================================================================
@@ -80,8 +84,8 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(slot);
   WRITE_SETTING(noteLayout);
   WRITE_SETTING(forceBellows);
-  WRITE_SETTING(expressionTypes[LEFT]);
-  WRITE_SETTING(expressionTypes[RIGHT]);
+  WRITE_SETTING(expressions[LEFT]);
+  WRITE_SETTING(expressions[RIGHT]);
   WRITE_SETTING(maxVelocity[LEFT]);
   WRITE_SETTING(maxVelocity[RIGHT]);
   WRITE_SETTING(transpose);
@@ -105,6 +109,7 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(levels[RIGHT]);
   WRITE_SETTING(showFPS);
   WRITE_SETTING(menuBrightness);
+  WRITE_SETTING(noteDisplay);
   WRITE_SETTING(menuPageIndex);
   WRITE_SETTING(menuDisplayEnabled);
   WRITE_SETTING(attack25);
@@ -147,8 +152,8 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(slot);
   READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
-  READ_SETTING(expressionTypes[LEFT]);
-  READ_SETTING(expressionTypes[RIGHT]);
+  READ_SETTING(expressions[LEFT]);
+  READ_SETTING(expressions[RIGHT]);
   READ_SETTING(maxVelocity[LEFT]);
   READ_SETTING(maxVelocity[RIGHT]);
   READ_SETTING(transpose);
@@ -172,6 +177,7 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(levels[RIGHT]);
   READ_SETTING(showFPS);
   READ_SETTING(menuBrightness);
+  READ_SETTING(noteDisplay);
   READ_SETTING(menuPageIndex);
   READ_SETTING(menuDisplayEnabled);
   READ_SETTING(attack25);

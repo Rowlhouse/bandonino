@@ -16,7 +16,7 @@
 #define NOTE_AS 10
 #define NOTE_BN 11
 
-#define NOTE(note, octave) (octave * 12 + NOTE_##note)
+#define NOTE(note, octave) (12 + octave * 12 + NOTE_##note)
 #define NOTE_UNUSED 0
 #define SKIPPED_KEY 0
 #define NOTE_BUTTON 0

@@ -11,7 +11,7 @@ Adafruit_SSD1327 display(128, 128, &Wire, OLED_RESET, 4000000);
 // Note that fonts can be generated from https://oleddisplay.squix.ch/#/home
 #include "Fonts/FreeSans9pt7b.h"
 static const GFXfont* sPageTitleFont = &FreeSans9pt7b;
-static const int sCharWidth = 5;
+static const int sCharWidth = 6; // 5 plus 1 for the space
 static const int sCharHeight = 8;
 
 // Screen size in the defautl character size
@@ -296,14 +296,14 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 10, 200, 10, false));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
-  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[LEFT], gExpressionTypes, EXPRESSION_TYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Expression", &settings.expressions[LEFT], gExpressionNames, EXPRESSION_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[LEFT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
-  sPages.back().mOptions.push_back(Option("Expression", &settings.expressionTypes[RIGHT], gExpressionTypes, EXPRESSION_TYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Expression", &settings.expressions[RIGHT], gExpressionNames, EXPRESSION_NUM));
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1, false));
@@ -319,10 +319,11 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Instrument", &settings.metronomeMidiInstrument, 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
-  sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayouts, NOTELAYOUTTYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
   sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Debounce", &settings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
+  sPages.back().mOptions.push_back(Option("Note disp.", &settings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Settings", {}));
@@ -356,9 +357,17 @@ void initMenu() {
 static std::vector<int> sLastPlayingNotes[2];
 
 //====================================================================================================
+int convertToScreenY(int y) {
+  return 127 - y;
+}
+
+int lowestY = 0 + sCharHeight * 2;
+int highestY = 85 + sCharHeight * 2;
+int minMidi[2] = { NOTE(CN, 2), NOTE(AN, 3) };
+int maxMidi[2] = { NOTE(AN, 4), NOTE(BN, 6) };
+
+//====================================================================================================
 void displayPlayingNotes(int side) {
-  const int offset = 16;
-  int col = side ? 128 - offset - 3 * 2 * sCharWidth : offset;
   byte* playingNotes = bigState.playingNotes[side];
   std::vector<int>& lastNotes = sLastPlayingNotes[side];
 
@@ -373,16 +382,55 @@ void displayPlayingNotes(int side) {
     return;
 
   display.setTextSize(2);
-  int row = 5;
-  size_t num = std::max(notes.size(), lastNotes.size());
-  for (size_t i = 0; i < num; ++i, --row) {
-    if (row <= 0)
-      break;
-    display.setCursor(col, sPageY + row * sCharHeight * 2);
-    if (i < notes.size()) {
-      display.printf("%-3s", midiNoteNames[notes[i]]);
-    } else {
-      display.printf("   ");
+  if (settings.noteDisplay == NOTE_DISPLAY_PLACED) {
+    // Place notes according to their pitch
+    const int offset = 0;
+    int col = side ? 128 - offset - 3 * 2 * sCharWidth : offset;
+    int pushDelta = side ? -sCharWidth * 3 * 2 : sCharWidth * 3 * 2;
+    // Clear any previous notes
+    for (int note : lastNotes) {
+      float frac = (note - minMidi[side]) / float(maxMidi[side] - minMidi[side]);
+      int y = lowestY + frac * (highestY - lowestY);
+      if (side)
+        display.setCursor(col + pushDelta, convertToScreenY(y));
+      else
+        display.setCursor(col, convertToScreenY(y));
+      display.printf("      ");
+    }
+    // Display new notes, but don't write to the background in case of some remaining overlap
+    display.setTextColor(settings.menuBrightness, settings.menuBrightness);
+    int prevY = -1000;
+    bool prevPushed = false;
+    for (int note : notes) {
+      float frac = (note - minMidi[side]) / float(maxMidi[side] - minMidi[side]);
+      int y = lowestY + frac * (highestY - lowestY);
+      if (y < prevY + 2 * sCharHeight && !prevPushed) {
+        prevPushed = true;
+        display.setCursor(col + pushDelta, convertToScreenY(y));
+      } else {
+        display.setCursor(col, convertToScreenY(y));
+        prevPushed = false;
+      }
+      display.printf("%-3s", midiNoteNames[note]);
+      prevY = y;
+    }
+    display.setTextColor(settings.menuBrightness, 0x0);
+  } else {
+    // Display notes by stacking them - this is OK, but notes will jump around and it's not 
+    // always obvious whether it's high or low
+    const int offset = 16;
+    int col = side ? 127 - offset - 3 * 2 * sCharWidth : offset;
+    int row = 5;
+    size_t num = std::max(notes.size(), lastNotes.size());
+    for (size_t i = 0; i < num; ++i, --row) {
+      if (row <= 0)
+        break;
+      display.setCursor(col, sPageY + row * sCharHeight * 2);
+      if (i < notes.size()) {
+        display.printf("%-3s", midiNoteNames[notes[i]]);
+      } else {
+        display.printf("   ");
+      }
     }
   }
   display.display();
@@ -401,11 +449,6 @@ void displayAllPlayingNotes() {
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
   display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
   display.display();
-}
-
-//====================================================================================================
-int convertToScreenY(int y) {
-  return 127 - y;
 }
 
 const int STAFF_LINE_SPACING = 8;

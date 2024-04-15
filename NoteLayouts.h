@@ -31,9 +31,9 @@ struct NoteLayout {
   const char* name = "none";
 };
 
-extern const char* gNoteLayouts[];
+extern const char* gNoteLayoutNames[];
 
-const char* getNoteLayout();
+const char* getNoteLayoutName();
 
 // This updates the state to have the note arrays to match what is in settings
 void syncNoteLayout();

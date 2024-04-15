@@ -224,7 +224,7 @@ void updateBellows() {
   }
 
   for (int side = 0; side != 2; ++side) {
-    if (settings.expressionTypes[side] == EXPRESSION_TYPE_VOLUME) {
+    if (settings.expressions[side] == EXPRESSION_VOLUME) {
       float volume = state.modifiedPressure * settings.levels[side] / 100.0f;
       state.midiVolumes[side] = std::min((int)(128 * volume), 127);
     } else {
@@ -299,8 +299,8 @@ int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayo
     if (midiNote > 0 && midiNote <= 127) {
       return midiNote;
     }
-    return -1;
   }
+  return -1;
 }
 
 //====================================================================================================
@@ -327,7 +327,7 @@ void playButtons(
 
 //====================================================================================================
 int getVelocity(int side) {
-  if (settings.expressionTypes[side] == EXPRESSION_TYPE_VOLUME)
+  if (settings.expressions[side] == EXPRESSION_VOLUME)
     return settings.maxVelocity[side];
   return convertFractionToMidi(state.modifiedPressure * (settings.levels[side] / 100.0f) * (settings.maxVelocity[side] / 127.0f));
 }
@@ -367,7 +367,7 @@ void readKeys(const byte rowPins[], const byte columnPins[], byte activeKeys[], 
         activeKeysTime[iKey] = currentMillis;
       }
 
-      if (keyState == LOW && (currentMillis - activeKeysTime[iKey]) > settings.debounceTime) {
+      if (keyState == LOW && int(currentMillis - activeKeysTime[iKey]) > settings.debounceTime) {
         activeKeys[iKey] = 0;
       }
       pinMode(rowPin, INPUT);

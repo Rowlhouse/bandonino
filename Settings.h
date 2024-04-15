@@ -5,23 +5,30 @@
 
 #include <stdint.h>
 
-enum ExpressionType {
-  EXPRESSION_TYPE_VOLUME,
-  EXPRESSION_TYPE_VELOCITY,
-  EXPRESSION_TYPE_NUM
+enum Expression {
+  EXPRESSION_VOLUME,
+  EXPRESSION_VELOCITY,
+  EXPRESSION_NUM
 };
-extern const char* gExpressionTypes[];
+extern const char* gExpressionNames[];
+
+enum NoteDisplay {
+  NOTE_DISPLAY_STACKED,
+  NOTE_DISPLAY_PLACED,
+  NOTE_DISPLAY_NUM
+};
+extern const char* gNoteDisplayNames[];
 
 struct Settings {
   int slot; // settings slot - e.g. 0 to 9
   int noteLayout = NOTELAYOUTTYPE_MANOURY2;
   int forceBellows = 0;   // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
-  int expressionTypes[2] = {EXPRESSION_TYPE_VOLUME, EXPRESSION_TYPE_VOLUME};
+  int expressions[2] = {EXPRESSION_VOLUME, EXPRESSION_VOLUME};
   int maxVelocity[2] = {126, 126};
   int transpose = 0;
 
-  uint32_t debounceTime = 0;  // milliseconds. Turns out not to be very helpful
+  int debounceTime = 0;  // milliseconds. Turns out not to be very helpful
 
   int midiChannels[2] = {1, 2};
   int midiInstruments[2] = {0, 0}; // 0 means don't send - let the playback system decide
@@ -43,6 +50,7 @@ struct Settings {
 
   int showFPS = 0;
   int menuBrightness = 12; // 0 to 0xf
+  int noteDisplay = 0;
 
   int  menuPageIndex = 0;
   bool menuDisplayEnabled = true;
