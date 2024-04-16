@@ -309,13 +309,18 @@ void playButtons(
   const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[], int velocity, int transpose) {
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
-      // Start playing
-      playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), velocity, midiChannel, playingNotes);
+      if (state.bellowsState != BELLOWS_STATE_STATIONARY) {
+        // Start playing, but only if there is some bellows action.
+        playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), velocity, midiChannel, playingNotes);
+        // Only update previous activity if there is bellows motion - otherwise pressing a key with 
+        // the bellows stationary can result in losing the note.
+        previousActiveKeys[iKey] = activeKeys[iKey];
+      }
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
       // Stop playing
       stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), 0, midiChannel, playingNotes);
+      previousActiveKeys[iKey] = activeKeys[iKey];
     }
-    previousActiveKeys[iKey] = activeKeys[iKey];
   }
 }
 
@@ -331,7 +336,7 @@ void playAllButtons() {
   for (int side = 0; side != 2; ++side) {
     int velocity = getVelocity(side);
     playButtons(bigState.activeKeys(side), bigState.previousActiveKeys(side), PinInputs::keyCounts[side], settings.midiChannels[side],
-    bigState.noteLayout.open(side), bigState.noteLayout.close(side), bigState.playingNotes[side], velocity, settings.transpose[side]);
+                bigState.noteLayout.open(side), bigState.noteLayout.close(side), bigState.playingNotes[side], velocity, settings.transpose[side]);
   }
 }
 

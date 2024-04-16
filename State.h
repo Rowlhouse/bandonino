@@ -8,9 +8,9 @@ struct Settings;
 
 enum BellowsState
 {
-  BELLOWS_STATE_CLOSING,
-  BELLOWS_STATE_STATIONARY,
-  BELLOWS_STATE_OPENING
+  BELLOWS_STATE_CLOSING = -1,
+  BELLOWS_STATE_STATIONARY = 0,
+  BELLOWS_STATE_OPENING = 1
 };
 
 // Big state - don't copy
