@@ -367,7 +367,7 @@ void readKeys(const byte rowPins[], const byte columnPins[], byte activeKeys[], 
         activeKeysTime[iKey] = currentMillis;
       }
 
-      if (keyState == LOW && int(currentMillis - activeKeysTime[iKey]) > settings.debounceTime) {
+      if (keyState == LOW && int(currentMillis - activeKeysTime[iKey]) >= settings.debounceTime) {
         activeKeys[iKey] = 0;
       }
       pinMode(rowPin, INPUT);
