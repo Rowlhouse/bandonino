@@ -300,6 +300,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose[LEFT], -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[LEFT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
@@ -307,6 +308,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose[RIGHT], -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[RIGHT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
@@ -320,7 +322,6 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Debounce", &settings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Note disp.", &settings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
@@ -447,7 +448,7 @@ void displayAllPlayingNotes() {
   // Also display pressure
   display.setCursor(75, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
+  display.printf("%s %3.2f", bellowsIndicators[state.bellowsState + 1], state.absPressure);
   display.display();
 }
 
@@ -628,7 +629,7 @@ void displayPlayingStaffs() {
   // Also display pressure
   display.setCursor(0, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  display.printf("%s %3.2f", bellowsIndicators[state.bellowsOpening + 1], state.absPressure);
+  display.printf("%s %3.2f", bellowsIndicators[state.bellowsState + 1], state.absPressure);
   display.display();
 }
 

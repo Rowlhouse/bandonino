@@ -193,19 +193,19 @@ void updateBellows() {
 
     // Handle bellows reversals
     if (state.pressure == 0) {  //Bellows stopped
-      state.bellowsOpening = 0;
+      state.bellowsState = BELLOWS_STATE_STATIONARY;
       if (prevState.pressure != 0) {  //Bellows were not previously stopped
         stopAllNotes();               //All Notes Off
       }
     } else {                     //Bellows not stopped
       if (state.pressure < 0) {  //Pull
-        state.bellowsOpening = 1;
+        state.bellowsState = BELLOWS_STATE_OPENING;
         if (prevState.pressure >= 0) {  //Pull and Previously Push or stopped
           stopAllNotes();               //All Notes Off
         }
       }
       if (state.pressure > 0) {  //Push
-        state.bellowsOpening = -1;
+        state.bellowsState = BELLOWS_STATE_CLOSING;
         if (prevState.pressure <= 0) {  //Push and Previously Pull or stopped
           stopAllNotes();               //All Notes Off
         }
@@ -214,13 +214,13 @@ void updateBellows() {
 
     // If the quantized volume is zero, force that to show as no bellows movement
     if (state.midiVolumes[LEFT] == 0 && state.midiVolumes[RIGHT] == 0)
-      state.bellowsOpening = 0;
+      state.bellowsState = BELLOWS_STATE_STATIONARY;
 
   } else {
     state.modifiedPressure = 1.0f;
     state.absPressure = 1.0f;
 
-    state.bellowsOpening = settings.forceBellows == 1 ? 1 : -1;
+    state.bellowsState = settings.forceBellows == 1 ? BELLOWS_STATE_OPENING : BELLOWS_STATE_CLOSING;
   }
 
   for (int side = 0; side != 2; ++side) {
@@ -290,12 +290,12 @@ void stopAllNotes() {
 }
 
 //====================================================================================================
-int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayoutClose) {
-  if (state.bellowsOpening == 0)
+int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayoutClose, int transpose) {
+  if (state.bellowsState == BELLOWS_STATE_STATIONARY)
     return -1;
-  int midiNote = state.bellowsOpening > 0 ? noteLayoutOpen[iKey] : noteLayoutClose[iKey];
+  int midiNote = state.bellowsState == BELLOWS_STATE_OPENING ? noteLayoutOpen[iKey] : noteLayoutClose[iKey];
   if (midiNote > 0 && midiNote <= 127) {
-    midiNote += settings.transpose;
+    midiNote += transpose;
     if (midiNote > 0 && midiNote <= 127) {
       return midiNote;
     }
@@ -305,21 +305,15 @@ int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayo
 
 //====================================================================================================
 void playButtons(
-  const byte activeKeys[],
-  byte previousActiveKeys[],
-  const int keyCount,
-  const int midiChannel,
-  const byte* noteLayoutOpen,
-  const byte* noteLayoutClose,
-  byte playingNotes[],
-  int velocity) {
+  const byte activeKeys[], byte previousActiveKeys[], const int keyCount, const int midiChannel,
+  const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[], int velocity, int transpose) {
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
       // Start playing
-      playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose), velocity, midiChannel, playingNotes);
+      playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), velocity, midiChannel, playingNotes);
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
       // Stop playing
-      stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose), 0, midiChannel, playingNotes);
+      stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), 0, midiChannel, playingNotes);
     }
     previousActiveKeys[iKey] = activeKeys[iKey];
   }
@@ -336,8 +330,8 @@ int getVelocity(int side) {
 void playAllButtons() {
   for (int side = 0; side != 2; ++side) {
     int velocity = getVelocity(side);
-    playButtons(bigState.activeKeys(side), bigState.previousActiveKeys(side), PinInputs::keyCounts[side],
-                settings.midiChannels[side], bigState.noteLayout.open(side), bigState.noteLayout.close(side), bigState.playingNotes[side], velocity);
+    playButtons(bigState.activeKeys(side), bigState.previousActiveKeys(side), PinInputs::keyCounts[side], settings.midiChannels[side],
+    bigState.noteLayout.open(side), bigState.noteLayout.close(side), bigState.playingNotes[side], velocity, settings.transpose[side]);
   }
 }
 
@@ -413,7 +407,7 @@ void hardwareTest() {
     Serial.println("Bellows");
     Serial.println(state.pressure);
     Serial.println(state.modifiedPressure);
-    Serial.println(state.bellowsOpening);
+    Serial.println(state.bellowsState);
   }
 
   if (showKeys) {
@@ -423,7 +417,7 @@ void hardwareTest() {
         int iKey = INDEX_LEFT(i, j);
         Serial.print(bigState.activeKeysLeft[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayout.leftOpen[iKey] : bigState.noteLayout.leftClose[iKey]);
+        Serial.print(state.bellowsState == BELLOWS_STATE_OPENING ? bigState.noteLayout.leftOpen[iKey] : bigState.noteLayout.leftClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }
@@ -435,7 +429,7 @@ void hardwareTest() {
         int iKey = INDEX_RIGHT(i, j);
         Serial.print(bigState.activeKeysRight[iKey]);
         Serial.print(" (");
-        Serial.print(state.bellowsOpening > 0 ? bigState.noteLayout.rightOpen[iKey] : bigState.noteLayout.rightClose[iKey]);
+        Serial.print(state.bellowsState == BELLOWS_STATE_OPENING ? bigState.noteLayout.rightOpen[iKey] : bigState.noteLayout.rightClose[iKey]);
         Serial.print(")");
         Serial.print("\t");
       }

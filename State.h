@@ -6,6 +6,13 @@
 
 struct Settings;
 
+enum BellowsState
+{
+  BELLOWS_STATE_CLOSING,
+  BELLOWS_STATE_STATIONARY,
+  BELLOWS_STATE_OPENING
+};
+
 // Big state - don't copy
 struct BigState {
   // The actual note layout
@@ -35,8 +42,7 @@ struct BigState {
 
 // State can be copied and checked for changes
 struct State {
-  // opening = 1, stopped = 0, closing = -1
-  int bellowsOpening = 1;
+  BellowsState bellowsState = BELLOWS_STATE_STATIONARY;
 
   // Raw load cell data
   long zeroLoadReading;
