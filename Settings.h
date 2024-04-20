@@ -56,8 +56,8 @@ struct Settings {
   bool menuDisplayEnabled = true;
 
   // Shape the pressure response using attack params. As percentages
-  int attack25 = 25;  // output when pressure = 25%
-  int attack50 = 50;  // output when pressure = 50%
+  int attack25 = 35;  // output when pressure = 25%
+  int attack50 = 55;  // output when pressure = 50%
   int attack75 = 75;  // output when pressure = 75%
 
   // Things below here are updated automatically
@@ -71,6 +71,6 @@ struct Settings {
   bool readFromCard(const char* filename);
 };
 
-extern Settings settings;
+extern Settings gSettings;
 
 #endif

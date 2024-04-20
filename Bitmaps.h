@@ -1,73 +1,42 @@
 #ifndef BITMAPS_H
 #define BITMAPS_H
-#include <Wire.h>
-
-// LCD screen related variables
-static const int glyphWidth = 5;
-static const int glyphHeight = 8;
-static const byte upArrow[] = { B00100, B01110, B11111, B00100, B00100, B00100, B00100, B00000 };      // Define an up arrow glyph in binary to send to the LCD
-static const byte downArrow[] = { B00100, B00100, B00100, B00100, B11111, B01110, B00100, B00000 };    // Define a down arrow glyph in binary to send to the LCD
-static const byte recordLeft[] = { B00011, B01111, B01100, B11001, B11001, B01100, B01111, B00011 };   // Define left side of recording glyph in binary to send to the LCD
-static const byte recordRight[] = { B11000, B11110, B00110, B10011, B10011, B00110, B11110, B11000 };  // Define right side of recording glyph in binary to send to the LCD
-static const byte pauseLeft[] = { B00110, B00110, B00110, B00110, B00110, B00110, B00110, B00000 };    // Define left side of pause glyph in binary to send to the LCD
-static const byte pauseRight[] = { B01100, B01100, B01100, B01100, B01100, B01100, B01100, B00000 };   // Define right side of pause glyph in binary to send to the LCD
-static const byte loopLeft[] = { B00000, B00000, B00010, B00100, B00010, B00000, B00000, B00000 };     // Define left side of loop track active glyph in binary to send to the LCD
-static const byte loopRight[] = { B00000, B00000, B01000, B00100, B01000, B00000, B00000, B00000 };    // Define right side of loop track active glyph in binary to send to the LCD
-
-#define LOGO16_GLCD_HEIGHT 16 
-#define LOGO16_GLCD_WIDTH  16 
-static const unsigned char PROGMEM logo16_glcd_bmp[] =
-{ B00000000, B11000000,
-  B00000001, B11000000,
-  B00000001, B11000000,
-  B00000011, B11100000,
-  B11110011, B11100000,
-  B11111110, B11111000,
-  B01111110, B11111111,
-  B00110011, B10011111,
-  B00011111, B11111100,
-  B00001101, B01110000,
-  B00011011, B10100000,
-  B00111111, B11100000,
-  B00111111, B11110000,
-  B01111100, B11110000,
-  B01110000, B01110000,
-  B00000000, B00110000 };
+//#include <Wire.h>
+#include <stdint.h>
 
 // https://mischianti.org/images-to-byte-array-online-converter-cpp-arduino/
 
-const uint16_t NoteHeadSize[] = {8, 7};
-const int NoteHeadOffsets[] = {-4, -4};
+static const uint16_t NoteHeadSize[] = {8, 7};
+static const int NoteHeadOffsets[] = {-4, -4};
 
 // Offsets are from the note position
-const uint16_t SharpSize[] = {6, 15};
-const int SharpOffsets[] = {-13, -8};
+static const uint16_t SharpSize[] = {6, 15};
+static const int SharpOffsets[] = {-13, -8};
 
 // Offsets are from the note position
-const uint16_t FlatSize[] = {5,12};
-const int FlatOffsets[] = {-12, -4};
+static const uint16_t FlatSize[] = {5,12};
+static const int FlatOffsets[] = {-12, -4};
 
 // 'NoteHeadLine', 8x7px
-const unsigned char NoteHeadLine [] PROGMEM = {
+static const unsigned char NoteHeadLine [] = {
 	0x1c, 0x7e, 0xff, 0x00, 0xff, 0x7e, 0x38
 };
 // 'NoteHeadSpace', 8x7px
-const unsigned char NoteHeadSpace [] PROGMEM = {
+static const unsigned char NoteHeadSpace [] = {
 	0x1c, 0x7e, 0xff, 0xff, 0xff, 0x7e, 0x38
 };
 
-const unsigned char SharpSpace [] PROGMEM = {
+static const unsigned char SharpSpace [] = {
 	// 'SharpSpace, 6x15px
 	0x08, 0x08, 0x48, 0x4c, 0x5c, 0x78, 0xe8, 0xcc, 0x5c, 0x78, 0xe8, 0xc8, 0x48, 0x40, 0x40
 };
 
 // 'FlatSpace', 5x12px
-const unsigned char FlatSpace [] PROGMEM = {
+static const unsigned char FlatSpace [] = {
 	0x80, 0x80, 0x80, 0x80, 0x80, 0xb0, 0xc8, 0x88, 0x88, 0x90, 0xa0, 0xc0
 };
 
 // 'ClefPage', 128x128px
-const unsigned char ClefPage [] PROGMEM = {
+static const unsigned char ClefPage [] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 

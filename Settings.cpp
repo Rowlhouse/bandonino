@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-Settings settings;
+Settings gSettings;
 
 const char* gExpressionNames[] = {
   "Volume", "Velocity"
@@ -24,14 +24,14 @@ const char* gNoteDisplayNames[] = {
 void Settings::updateMIDIRange() {
   midiMin = 127;
   midiMax = 0;
-  if (!bigState.noteLayout.leftOpen)
+  if (!gBigState.mNoteLayout.mLeftOpen)
     return;
   for (int j = 0; j != 2; ++j) {
     for (int i = 0; i != PinInputs::keyCounts[j]; ++i) {
-      midiMax = std::max(bigState.noteLayout.open(j)[i], midiMax);
-      midiMin = std::min(bigState.noteLayout.open(j)[i], midiMin);
-      midiMax = std::max(bigState.noteLayout.close(j)[i], midiMax);
-      midiMin = std::min(bigState.noteLayout.close(j)[i], midiMin);
+      midiMax = std::max(gBigState.mNoteLayout.open(j)[i], midiMax);
+      midiMin = std::min(gBigState.mNoteLayout.open(j)[i], midiMin);
+      midiMax = std::max(gBigState.mNoteLayout.close(j)[i], midiMax);
+      midiMin = std::min(gBigState.mNoteLayout.close(j)[i], midiMin);
     }
   }
 }

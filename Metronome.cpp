@@ -25,18 +25,18 @@ inline int convertPercentToMidi(int percent) {
 
 //====================================================================================================
 void updateMetronome() {
-  if (!settings.metronomeEnabled) {
+  if (!gSettings.metronomeEnabled) {
     sNextBeat = 1;
-    sNextBeatTime = state.loopStartTimeMillis + 200;
-    sNextStopTime = state.loopStartTimeMillis + 200;
+    sNextBeatTime = gState.mLoopStartTimeMillis + 200;
+    sNextStopTime = gState.mLoopStartTimeMillis + 200;
     sPlaying = false;
     return;
   }
 
-  if (settings.metronomeMidiInstrument != sPreviousInstrument) {
-    if (settings.metronomeMidiInstrument != 0)
-      usbMIDI.sendProgramChange(settings.metronomeMidiInstrument, settings.metronomeMidiChannel);
-    sPreviousInstrument = settings.metronomeMidiInstrument;
+  if (gSettings.metronomeMidiInstrument != sPreviousInstrument) {
+    if (gSettings.metronomeMidiInstrument != 0)
+      usbMIDI.sendProgramChange(gSettings.metronomeMidiInstrument, gSettings.metronomeMidiChannel);
+    sPreviousInstrument = gSettings.metronomeMidiInstrument;
   }
 
   // Menu interactions can be slow, so don't trus tthe loop start time
@@ -44,23 +44,23 @@ void updateMetronome() {
 
   // Stop any playing note if it's time
   if (time >= sNextStopTime && sPlaying) {
-    usbMIDI.sendNoteOff(settings.metronomeMidiNotePrimary, 0, settings.metronomeMidiChannel);
-    usbMIDI.sendNoteOff(settings.metronomeMidiNoteSecondary, 0, settings.metronomeMidiChannel);
+    usbMIDI.sendNoteOff(gSettings.metronomeMidiNotePrimary, 0, gSettings.metronomeMidiChannel);
+    usbMIDI.sendNoteOff(gSettings.metronomeMidiNoteSecondary, 0, gSettings.metronomeMidiChannel);
     sPlaying = false;
   }
 
   if (time >= sNextBeatTime) {
-    int midiNote = (sNextBeat == 1) ? settings.metronomeMidiNotePrimary : settings.metronomeMidiNoteSecondary;
-    int midiVolume = convertPercentToMidi(settings.metronomeVolume);
-    usbMIDI.sendControlChange(0x07, midiVolume, settings.metronomeMidiChannel);
-    usbMIDI.sendNoteOn(midiNote, 127, settings.metronomeMidiChannel);
+    int midiNote = (sNextBeat == 1) ? gSettings.metronomeMidiNotePrimary : gSettings.metronomeMidiNoteSecondary;
+    int midiVolume = convertPercentToMidi(gSettings.metronomeVolume);
+    usbMIDI.sendControlChange(0x07, midiVolume, gSettings.metronomeMidiChannel);
+    usbMIDI.sendNoteOn(midiNote, 127, gSettings.metronomeMidiChannel);
     Serial.printf("Metronome beat %d\n", midiNote);
 
-    float beatPeriod = 60.0f / settings.metronomeBeatsPerMinute;
+    float beatPeriod = 60.0f / gSettings.metronomeBeatsPerMinute;
     sNextBeatTime = time + (uint32_t)(beatPeriod * 1000);
     sNextStopTime = time + (uint32_t)(0.1f * beatPeriod * 1000);
 
-    sNextBeat = (sNextBeat + 1) % settings.metronomeBeatsPerBar;
+    sNextBeat = (sNextBeat + 1) % gSettings.metronomeBeatsPerBar;
     sPlaying = true;
   }
 }

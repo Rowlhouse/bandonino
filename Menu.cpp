@@ -1,9 +1,21 @@
+#include "Menu.h"
+
+#include "Settings.h"
+#include "State.h"
+#include "NoteNames.h"
+#include "Bitmaps.h"
+
 //====================================================================================================
 // 1327 128x128 Display
 //====================================================================================================
 // https://github.com/adafruit/Adafruit_SSD1327
 // v 1.0.4
 #include <Adafruit_SSD1327.h>
+
+#include <algorithm>
+#include <vector>
+
+//====================================================================================================
 #define I2C_ADDRESS 0x3D
 #define OLED_RESET -1
 Adafruit_SSD1327 display(128, 128, &Wire, OLED_RESET, 4000000);
@@ -22,20 +34,11 @@ static const int sScreenCharHeight = 128 / sCharHeight;
 // clip the page title
 static const int sPageY = 16;
 
-//====================================================================================================
-
-#include "Menu.h"
-#include "Settings.h"
-#include "State.h"
-#include "NoteNames.h"
-#include "Bitmaps.h"
-
-#include <algorithm>
-#include <vector>
-
-
 static bool sForceMenuRefresh = false;
 
+//====================================================================================================
+// This is a bit hacky, overloading the constructors. Each entry should be customisable as it's 
+// added, with a clearer definition. Then we wouldn't need the type either.
 struct Option {
   typedef void (*Action)();
 
@@ -127,6 +130,13 @@ static float sAverageFPS = 0;
 static float sWorstFPS = 0;
 
 //====================================================================================================
+void forceMenuRefresh() {
+  sForceMenuRefresh = true;
+  sPreviousOptionIndex = -1;
+  sPreviousPageIndex = -1;
+}
+
+//====================================================================================================
 void showMessage(const char* msg, int time) {
   display.clearDisplay();
   display.setFont(sPageTitleFont);
@@ -139,6 +149,7 @@ void showMessage(const char* msg, int time) {
 }
 
 //====================================================================================================
+// Displays a little countdown prior to measuring the zero value
 void zeroBellows() {
   Serial.println("Zero bellows");
   display.clearDisplay();
@@ -158,9 +169,9 @@ void zeroBellows() {
   }
 
   display.setTextSize(1);
-  display.setTextColor(settings.menuBrightness, 0x0);
+  display.setTextColor(gSettings.menuBrightness, 0x0);
 
-  state.zeroLoadReading = state.loadReading;
+  gState.mZeroLoadReading = gState.mLoadReading;
   forceMenuRefresh();
 }
 
@@ -171,49 +182,42 @@ void actionZeroBellows() {
 
 //====================================================================================================
 void saveSettings() {
-  Serial.println("Writing settings to settings.json");
-  if (!settings.writeToCard("settings.json"))
-    Serial.println("Failed to write to settings.json");
+  Serial.println("Writing gSettings to gSettings.json");
+  if (!gSettings.writeToCard("gSettings.json"))
+    Serial.println("Failed to write to gSettings.json");
 }
 
 //====================================================================================================
 void actionSaveSettings() {
-  Serial.println("Save settings");
+  Serial.println("Save gSettings");
   char filename[32];
-  sprintf(filename, "Settings%02d.json", settings.slot);
-  if (!settings.writeToCard(filename))
-    Serial.printf("Failed to write settings to %s\n", filename);
+  sprintf(filename, "Settings%02d.json", gSettings.slot);
+  if (!gSettings.writeToCard(filename))
+    Serial.printf("Failed to write gSettings to %s\n", filename);
   else
     showMessage("Saved", 500);
 }
 
 //====================================================================================================
 void actionResetSettings() {
-  settings = Settings();
+  gSettings = Settings();
   showMessage("Reset", 500);
 }
 
 //====================================================================================================
 void actionLoadSettings() {
-  Serial.println("Load settings");
+  Serial.println("Load gSettings");
   char filename[32];
-  sprintf(filename, "Settings%02d.json", settings.slot);
-  if (!settings.readFromCard(filename))
-    Serial.printf("Failed to write settings to %s\n", filename);
+  sprintf(filename, "Settings%02d.json", gSettings.slot);
+  if (!gSettings.readFromCard(filename))
+    Serial.printf("Failed to write gSettings to %s\n", filename);
   else
     showMessage("Loaded", 500);
 }
 
 //====================================================================================================
 void actionShowFPS() {
-  settings.showFPS = !settings.showFPS;
-  sForceMenuRefresh = true;
-  sPreviousOptionIndex = -1;
-  sPreviousPageIndex = -1;
-}
-
-//====================================================================================================
-void forceMenuRefresh() {
+  gSettings.showFPS = !gSettings.showFPS;
   sForceMenuRefresh = true;
   sPreviousOptionIndex = -1;
   sPreviousPageIndex = -1;
@@ -221,8 +225,8 @@ void forceMenuRefresh() {
 
 //====================================================================================================
 void disableDisplay() {
-  if (settings.menuDisplayEnabled) {
-    settings.menuDisplayEnabled = false;
+  if (gSettings.menuDisplayEnabled) {
+    gSettings.menuDisplayEnabled = false;
     display.clearDisplay();
     display.display();
     saveSettings();
@@ -231,8 +235,8 @@ void disableDisplay() {
 
 //====================================================================================================
 void enableDisplay() {
-  if (!settings.menuDisplayEnabled) {
-    settings.menuDisplayEnabled = true;
+  if (!gSettings.menuDisplayEnabled) {
+    gSettings.menuDisplayEnabled = true;
     forceMenuRefresh();
     saveSettings();
   }
@@ -240,7 +244,7 @@ void enableDisplay() {
 
 //====================================================================================================
 void actionToggleDisplay() {
-  if (settings.menuDisplayEnabled) {
+  if (gSettings.menuDisplayEnabled) {
     Serial.println("Toggling display to off");
     disableDisplay();
   } else {
@@ -251,7 +255,7 @@ void actionToggleDisplay() {
 
 //====================================================================================================
 void actionToggleMetronome() {
-  settings.metronomeEnabled = !settings.metronomeEnabled;
+  gSettings.metronomeEnabled = !gSettings.metronomeEnabled;
 }
 
 //====================================================================================================
@@ -276,9 +280,9 @@ void initMenu() {
   if (!display.begin(I2C_ADDRESS))
     Serial.println("Unable to initialize OLED");
 
-  Serial.println("Loading settings from settings.json");
-  if (!settings.readFromCard("settings.json"))
-    Serial.println("Failed to load settings");
+  Serial.println("Loading gSettings from gSettings.json");
+  if (!gSettings.readFromCard("gSettings.json"))
+    Serial.println("Failed to load gSettings");
 
   // Not sure there's any merit to a blank page, since the display can be turned off by clicking
   // sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
@@ -289,46 +293,46 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
-  sPages.back().mOptions.push_back(Option("Bellows", &settings.forceBellows, sForceBellowsStrings, 3));
-  sPages.back().mOptions.push_back(Option("Attack 25%", &settings.attack25, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Attack 50%", &settings.attack50, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Attack 75%", &settings.attack75, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Press gain", &settings.pressureGain, 10, 200, 10, false));
+  sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
+  sPages.back().mOptions.push_back(Option("Attack 25%", &gSettings.attack25, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 50%", &gSettings.attack50, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 75%", &gSettings.attack75, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Press gain", &gSettings.pressureGain, 10, 200, 10, false));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
-  sPages.back().mOptions.push_back(Option("Expression", &settings.expressions[LEFT], gExpressionNames, EXPRESSION_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[LEFT], -100, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[LEFT], 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[LEFT], 0, 127, 1, false));
-  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose[LEFT], -12, 12, 1));
-  sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[LEFT], 0, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Expression", &gSettings.expressions[LEFT], gExpressionNames, EXPRESSION_NUM));
+  sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[LEFT], -100, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[LEFT], 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[LEFT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose[LEFT], -12, 12, 1));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[LEFT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
-  sPages.back().mOptions.push_back(Option("Expression", &settings.expressions[RIGHT], gExpressionNames, EXPRESSION_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &settings.pans[RIGHT], -100, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.levels[RIGHT], 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Max vel", &settings.maxVelocity[RIGHT], 0, 127, 1, false));
-  sPages.back().mOptions.push_back(Option("Transpose", &settings.transpose[RIGHT], -12, 12, 1));
-  sPages.back().mOptions.push_back(Option("Instrument", &settings.midiInstruments[RIGHT], 0, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Expression", &gSettings.expressions[RIGHT], gExpressionNames, EXPRESSION_NUM));
+  sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[RIGHT], -100, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[RIGHT], 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[RIGHT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose[RIGHT], -12, 12, 1));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
   sPages.back().mOptions.push_back(Option("Toggle", &actionToggleMetronome));
-  sPages.back().mOptions.push_back(Option("Beats/min", &settings.metronomeBeatsPerMinute, 20, 200, 1, false));
-  sPages.back().mOptions.push_back(Option("Beats/bar", &settings.metronomeBeatsPerBar, 1, 10, 1, false));
-  sPages.back().mOptions.push_back(Option("Volume", &settings.metronomeVolume, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Note 1", &settings.metronomeMidiNotePrimary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Note 2", &settings.metronomeMidiNoteSecondary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Instrument", &settings.metronomeMidiInstrument, 0, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
+  sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
+  sPages.back().mOptions.push_back(Option("Volume", &gSettings.metronomeVolume, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Note 1", &gSettings.metronomeMidiNotePrimary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Note 2", &gSettings.metronomeMidiNoteSecondary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.metronomeMidiInstrument, 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
-  sPages.back().mOptions.push_back(Option("Layout", &settings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Debounce", &settings.debounceTime, 0, 50, 1));
-  sPages.back().mOptions.push_back(Option("Brightness", &settings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
-  sPages.back().mOptions.push_back(Option("Note disp.", &settings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
+  sPages.back().mOptions.push_back(Option("Layout", &gSettings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Debounce", &gSettings.debounceTime, 0, 50, 1));
+  sPages.back().mOptions.push_back(Option("Brightness", &gSettings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
+  sPages.back().mOptions.push_back(Option("Note disp.", &gSettings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Settings", {}));
-  sPages.back().mOptions.push_back(Option("Slot", &settings.slot, 0, 9, 1));
+  sPages.back().mOptions.push_back(Option("Slot", &gSettings.slot, 0, 9, 1));
   sPages.back().mOptions.push_back(Option("Save", &actionSaveSettings));
   sPages.back().mOptions.push_back(Option("Load", &actionLoadSettings));
   sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
@@ -336,11 +340,11 @@ void initMenu() {
   // This isn't useful at the moment - may kill it
   sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
 
-  settings.menuPageIndex = std::clamp(settings.menuPageIndex, 0, (int)(sPages.size() - 1));
+  gSettings.menuPageIndex = std::clamp(gSettings.menuPageIndex, 0, (int)(sPages.size() - 1));
 
   display.clearDisplay();
   display.display();
-  display.setTextColor(settings.menuBrightness, 0x0);
+  display.setTextColor(gSettings.menuBrightness, 0x0);
   display.setTextWrap(false);
 
 #if 1
@@ -369,12 +373,12 @@ int maxMidi[2] = { NOTE(AN, 4), NOTE(BN, 6) };
 
 //====================================================================================================
 void displayPlayingNotes(int side) {
-  byte* playingNotes = bigState.playingNotes[side];
+  byte* playingNotes = gBigState.mPlayingNotes[side];
   std::vector<int>& lastNotes = sLastPlayingNotes[side];
 
   static std::vector<int> notes;
   notes.clear();
-  for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
+  for (int i = gSettings.midiMin; i <= gSettings.midiMax; ++i) {
     if (playingNotes[i]) {
       notes.push_back(i);
     }
@@ -383,7 +387,7 @@ void displayPlayingNotes(int side) {
     return;
 
   display.setTextSize(2);
-  if (settings.noteDisplay == NOTE_DISPLAY_PLACED) {
+  if (gSettings.noteDisplay == NOTE_DISPLAY_PLACED) {
     // Place notes according to their pitch
     const int offset = 0;
     int col = side ? 128 - offset - 3 * 2 * sCharWidth : offset;
@@ -399,7 +403,7 @@ void displayPlayingNotes(int side) {
       display.printf("      ");
     }
     // Display new notes, but don't write to the background in case of some remaining overlap
-    display.setTextColor(settings.menuBrightness, settings.menuBrightness);
+    display.setTextColor(gSettings.menuBrightness, gSettings.menuBrightness);
     int prevY = -1000;
     bool prevPushed = false;
     for (int note : notes) {
@@ -415,7 +419,7 @@ void displayPlayingNotes(int side) {
       display.printf("%-3s", midiNoteNames[note]);
       prevY = y;
     }
-    display.setTextColor(settings.menuBrightness, 0x0);
+    display.setTextColor(gSettings.menuBrightness, 0x0);
   } else {
     // Display notes by stacking them - this is OK, but notes will jump around and it's not 
     // always obvious whether it's high or low
@@ -448,7 +452,7 @@ void displayAllPlayingNotes() {
   // Also display pressure
   display.setCursor(75, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  display.printf("%s %3.2f", bellowsIndicators[state.bellowsState + 1], state.absPressure);
+  display.printf("%s %3.2f", bellowsIndicators[gState.mBellowsState + 1], gState.mAbsPressure);
   display.display();
 }
 
@@ -558,13 +562,13 @@ static Area sLastAreas[2];
 
 //====================================================================================================
 void displayPlayingStaff(int side) {
-  const byte* playingNotes = bigState.playingNotes[side];
+  const byte* playingNotes = gBigState.mPlayingNotes[side];
   std::vector<int>& lastNotes = sLastPlayingNotes[side];
   Area& area = sLastAreas[side];
 
   static std::vector<int> notes;
   notes.clear();
-  for (int i = settings.midiMin; i <= settings.midiMax; ++i) {
+  for (int i = gSettings.midiMin; i <= gSettings.midiMax; ++i) {
     if (playingNotes[i]) {
       notes.push_back(i);
     }
@@ -629,15 +633,15 @@ void displayPlayingStaffs() {
   // Also display pressure
   display.setCursor(0, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  display.printf("%s %3.2f", bellowsIndicators[state.bellowsState + 1], state.absPressure);
+  display.printf("%s %3.2f", bellowsIndicators[gState.mBellowsState + 1], gState.mAbsPressure);
   display.display();
 }
 
 //====================================================================================================
-void displayStatus(const State& state) {
+void displayStatus(const State& gState) {
   display.setCursor(0, sPageY + 1 * sCharHeight);
-  display.printf("Abs pressure %3.2f\n", state.absPressure);
-  display.printf("Mod pressure %3.2f\n", state.modifiedPressure);
+  display.printf("Abs pressure %3.2f\n", gState.mAbsPressure);
+  display.printf("Mod pressure %3.2f\n", gState.mModifiedPressure);
   display.printf("FPS %3.1f\n", sAverageFPS);
   display.printf("Worst FPS %3.1f\n", sWorstFPS);
   display.display();
@@ -681,12 +685,12 @@ void displayOption(int pageIndex, int optionIndex, int row, bool highlightLeft, 
     }
   }
 
-  display.setTextColor(settings.menuBrightness, 0x0);
+  display.setTextColor(gSettings.menuBrightness, 0x0);
 }
 
 //====================================================================================================
 Page& currentPage() {
-  return sPages[settings.menuPageIndex];
+  return sPages[gSettings.menuPageIndex];
 }
 
 //====================================================================================================
@@ -700,14 +704,14 @@ void updateFrameTiming() {
   int frameMicros = micros() - lastMicros;
   lastMicros += frameMicros;
 
-  static int lastFPSTime = state.loopStartTimeMillis;
+  static int lastFPSTime = gState.mLoopStartTimeMillis;
   static int framesSinceLast = 0;
   static int worstFrameTimeMicros = 0;
-  int timeSinceFPS = state.loopStartTimeMillis - lastFPSTime;
+  int timeSinceFPS = gState.mLoopStartTimeMillis - lastFPSTime;
   if (timeSinceFPS > 1000) {
     sWorstFPS = 1000000.0f / worstFrameTimeMicros;
     sAverageFPS = 1000.0f * framesSinceLast / timeSinceFPS;
-    lastFPSTime = state.loopStartTimeMillis;
+    lastFPSTime = gState.mLoopStartTimeMillis;
     // Serial.printf("FPS %3.1f\n", sAverageFPS);
     // Serial.printf("Worst FPS %3.1f\n", sWorstFPS);
     // Serial.printf("Worst frame %3.1f\n", worstFrameTimeMicros / 1000.0f);
@@ -731,10 +735,10 @@ T wrap(const T& value, const T& minValue, const T& maxValue) {
 }
 
 //====================================================================================================
-void updateMenu(Settings& settings, State& state) {
+void updateMenu() {
   updateFrameTiming();
 
-  int deltaRotaryEncoder = state.rotaryEncoderPosition - prevState.rotaryEncoderPosition;
+  int deltaRotaryEncoder = gState.mRotaryEncoderPosition - gPrevState.mRotaryEncoderPosition;
 
   bool toggledOptionValue = false;
   bool changedOption = sForceMenuRefresh;
@@ -742,7 +746,7 @@ void updateMenu(Settings& settings, State& state) {
   sForceMenuRefresh = false;
 
   // Detect click
-  if (state.rotaryEncoderPressed && !prevState.rotaryEncoderPressed) {
+  if (gState.mRotaryEncoderPressed && !gPrevState.mRotaryEncoderPressed) {
     if (currentOption().mType == Option::TYPE_OPTION) {
       sAdjustOption = !sAdjustOption;
       toggledOptionValue = true;
@@ -760,10 +764,10 @@ void updateMenu(Settings& settings, State& state) {
     enableDisplay();
 
   // If display is disabled, then only respond to the click to wake it up
-  if (!settings.menuDisplayEnabled)
+  if (!gSettings.menuDisplayEnabled)
     return;
 
-  int origPageIndex = settings.menuPageIndex;
+  int origPageIndex = gSettings.menuPageIndex;
   if (sAdjustOption) {
     if (deltaRotaryEncoder) {
       changedOption = true;
@@ -771,8 +775,8 @@ void updateMenu(Settings& settings, State& state) {
 
       if (sCurrentOptionIndex >= (int)currentPage().mOptions.size()) {
         // Jump to next page
-        if (settings.menuPageIndex + 1 < (int)sPages.size()) {
-          ++settings.menuPageIndex;
+        if (gSettings.menuPageIndex + 1 < (int)sPages.size()) {
+          ++gSettings.menuPageIndex;
           sCurrentOptionIndex = 0;
         } else {
           sCurrentOptionIndex = currentPage().mOptions.size() - 1;
@@ -780,9 +784,9 @@ void updateMenu(Settings& settings, State& state) {
       }
       if (sCurrentOptionIndex < 0) {
         // Jump to previous page
-        if (settings.menuPageIndex - 1 >= 0) {
-          --settings.menuPageIndex;
-          sCurrentOptionIndex = sPages[settings.menuPageIndex].mOptions.size() - 1;
+        if (gSettings.menuPageIndex - 1 >= 0) {
+          --gSettings.menuPageIndex;
+          sCurrentOptionIndex = sPages[gSettings.menuPageIndex].mOptions.size() - 1;
         } else {
           sCurrentOptionIndex = 0;
         }
@@ -813,12 +817,12 @@ void updateMenu(Settings& settings, State& state) {
     }
   }
 
-  if (settings.menuPageIndex != origPageIndex)
+  if (gSettings.menuPageIndex != origPageIndex)
     saveSettings();
 
   // If the page has changed, or we require a refresh, then display the page title
-  if (settings.menuPageIndex != sPreviousPageIndex || sCurrentOptionIndex != sPreviousOptionIndex) {
-    display.setTextColor(settings.menuBrightness, 0x0);
+  if (gSettings.menuPageIndex != sPreviousPageIndex || sCurrentOptionIndex != sPreviousOptionIndex) {
+    display.setTextColor(gSettings.menuBrightness, 0x0);
     display.clearDisplay();
 
     const Page& page = currentPage();
@@ -829,35 +833,35 @@ void updateMenu(Settings& settings, State& state) {
     sSplashTime = millis();
     display.display();
     sPreviousOptionIndex = sCurrentOptionIndex;
-    sPreviousPageIndex = settings.menuPageIndex;
+    sPreviousPageIndex = gSettings.menuPageIndex;
   }
 
   // Now handle the live updating info
   const Page& page = currentPage();
   if (page.mType == Page::TYPE_SPLASH) {
     uint32_t elapsedTime = millis() - sSplashTime;
-    if (elapsedTime > SPLASH_DURATION && settings.menuDisplayEnabled) {
-      settings.menuDisplayEnabled = false;
+    if (elapsedTime > SPLASH_DURATION && gSettings.menuDisplayEnabled) {
+      gSettings.menuDisplayEnabled = false;
       display.clearDisplay();
       display.display();
     }
-    if (settings.showFPS) {
+    if (gSettings.showFPS) {
       overlayFPS();
       display.display();
     }
   } else if (page.mType == Page::TYPE_PLAYING_NOTES) {
     displayAllPlayingNotes();
-    if (settings.showFPS)
+    if (gSettings.showFPS)
       overlayFPS();
     display.display();
   } else if (page.mType == Page::TYPE_PLAYING_STAFF) {
     displayPlayingStaffs();
-    if (settings.showFPS)
+    if (gSettings.showFPS)
       overlayFPS();
     display.display();
   } else if (page.mType == Page::TYPE_STATUS) {
-    displayStatus(state);
-    if (settings.showFPS)
+    displayStatus(gState);
+    if (gSettings.showFPS)
       overlayFPS();
     display.display();
   } else if (changedValue || changedOption || toggledOptionValue) {
@@ -868,16 +872,16 @@ void updateMenu(Settings& settings, State& state) {
       int line = iOption - offset;
       if (line >= 0 && line <= maxLine) {
         if (iOption == sCurrentOptionIndex)
-          displayOption(settings.menuPageIndex, iOption, line + 2, sAdjustOption, !sAdjustOption);
+          displayOption(gSettings.menuPageIndex, iOption, line + 2, sAdjustOption, !sAdjustOption);
         else
-          displayOption(settings.menuPageIndex, iOption, line + 2, false, false);
+          displayOption(gSettings.menuPageIndex, iOption, line + 2, false, false);
       }
     }
-    if (settings.showFPS)
+    if (gSettings.showFPS)
       overlayFPS();
     display.display();
   } else {
-    if (settings.showFPS) {
+    if (gSettings.showFPS) {
       overlayFPS();
       display.display();
     }

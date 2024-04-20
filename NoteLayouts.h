@@ -18,17 +18,17 @@ enum { LEFT,
        RIGHT };
 
 struct NoteLayout {
-  const uint8_t* leftOpen = nullptr;
-  const uint8_t* rightOpen = nullptr;
-  const uint8_t* leftClose = nullptr;
-  const uint8_t* rightClose = nullptr;
+  const uint8_t* mLeftOpen = nullptr;
+  const uint8_t* mRightOpen = nullptr;
+  const uint8_t* mLeftClose = nullptr;
+  const uint8_t* mRightClose = nullptr;
   const uint8_t* open(int side) {
-    return side ? rightOpen : leftOpen;
+    return side ? mRightOpen : mLeftOpen;
   }
   const uint8_t* close(int side) {
-    return side ? rightClose : leftClose;
+    return side ? mRightClose : mLeftClose;
   }
-  const char* name = "none";
+  const char* mName = "none";
 };
 
 extern const char* gNoteLayoutNames[];
@@ -37,5 +37,12 @@ const char* getNoteLayoutName();
 
 // This updates the state to have the note arrays to match what is in settings
 void syncNoteLayout();
+
+// The "action" keys - i.e. hot keys that could be mapped to things like zeroBellows. 
+// Check them with something like gBigState.activeKeysRight[gActionKey1]
+extern const int gActionKey1;
+extern const int gActionKey2;
+
+
 
 #endif

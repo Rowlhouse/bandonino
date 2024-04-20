@@ -7,16 +7,13 @@ extern Adafruit_SSD1327 display;
 struct State;
 struct Settings;
 
+// Call this once
 void initMenu();
 
-void updateMenu(Settings& settings, State& state);
+// Call this every tick
+void updateMenu();
 
-// Zeros the bellows and shows this on the display
-void zeroBellows();
-
-void forceMenuRefresh();
-
-// clear screen and show message for time (in ms)
+// clear screen and show message for time (in ms). This will block.
 void showMessage(const char* msg, int time);
 
 #endif

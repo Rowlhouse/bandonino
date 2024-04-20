@@ -16,8 +16,12 @@ const char* gNoteLayoutNames[] = {
 };
 
 //====================================================================================================
+const int gActionKey1 = INDEX_RIGHT(0, 2);
+const int gActionKey2 = INDEX_RIGHT(1, 1);
+
+//====================================================================================================
 const char* getNoteLayoutName() {
-  return gNoteLayoutNames[settings.noteLayout];
+  return gNoteLayoutNames[gSettings.noteLayout];
 }
 
 
@@ -162,28 +166,28 @@ NoteLayout hayden2NoteLayout = { hayden2LayoutLeftOpen, hayden2LayoutRightOpen, 
 
 //====================================================================================================
 void syncNoteLayout() {
-  if (bigState.noteLayout.name != getNoteLayoutName()) {
+  if (gBigState.mNoteLayout.mName != getNoteLayoutName()) {
     Serial.printf("Switching to %s\n", getNoteLayoutName());
-    switch (settings.noteLayout) {
+    switch (gSettings.noteLayout) {
       case NOTELAYOUTTYPE_MANOURY1:
-        bigState.noteLayout = manoury1NoteLayout;
+        gBigState.mNoteLayout = manoury1NoteLayout;
         break;
       case NOTELAYOUTTYPE_MANOURY2:
-        bigState.noteLayout = manoury2NoteLayout;
+        gBigState.mNoteLayout = manoury2NoteLayout;
         break;
       case NOTELAYOUTTYPE_TANGO_142:
-        bigState.noteLayout = tango142NoteLayout;
+        gBigState.mNoteLayout = tango142NoteLayout;
         break;
       case NOTELAYOUTTYPE_HAYDEN1:
-        bigState.noteLayout = hayden1NoteLayout;
+        gBigState.mNoteLayout = hayden1NoteLayout;
         break;
       case NOTELAYOUTTYPE_HAYDEN2:
-        bigState.noteLayout = hayden2NoteLayout;
+        gBigState.mNoteLayout = hayden2NoteLayout;
         break;
       default:
-        Serial.printf("Unknown note layout %d\n", settings.noteLayout);
+        Serial.printf("Unknown note layout %d\n", gSettings.noteLayout);
         break;
     }
-    settings.updateMIDIRange();
+    gSettings.updateMIDIRange();
   }
 }

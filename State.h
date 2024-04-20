@@ -16,54 +16,54 @@ enum BellowsState
 // Big state - don't copy
 struct BigState {
   // The actual note layout
-  NoteLayout noteLayout;
+  NoteLayout mNoteLayout;
 
-  uint8_t activeKeysLeft[PinInputs::keyCounts[LEFT]];
-  uint8_t activeKeysRight[PinInputs::keyCounts[RIGHT]];
+  uint8_t mActiveKeysLeft[PinInputs::keyCounts[LEFT]];
+  uint8_t mActiveKeysRight[PinInputs::keyCounts[RIGHT]];
   uint8_t* activeKeys(int side) {
-    return side ? activeKeysRight : activeKeysLeft;
+    return side ? mActiveKeysRight : mActiveKeysLeft;
   };
 
-  uint8_t previousActiveKeysLeft[PinInputs::keyCounts[LEFT]];
-  uint8_t previousActiveKeysRight[PinInputs::keyCounts[RIGHT]];
+  uint8_t mPreviousActiveKeysLeft[PinInputs::keyCounts[LEFT]];
+  uint8_t mPreviousActiveKeysRight[PinInputs::keyCounts[RIGHT]];
   uint8_t* previousActiveKeys(int side) {
-    return side ? previousActiveKeysRight : previousActiveKeysLeft;
+    return side ? mPreviousActiveKeysRight : mPreviousActiveKeysLeft;
   };
 
-  uint32_t activeKeysTimeLeft[PinInputs::keyCounts[LEFT]];
-  uint32_t activeKeysTimeRight[PinInputs::keyCounts[RIGHT]];
+  uint32_t mActiveKeysTimeLeft[PinInputs::keyCounts[LEFT]];
+  uint32_t mActiveKeysTimeRight[PinInputs::keyCounts[RIGHT]];
   uint32_t* activeKeysTimes(int side) {
-    return side ? activeKeysTimeRight : activeKeysTimeLeft;
+    return side ? mActiveKeysTimeRight : mActiveKeysTimeLeft;
   };
 
   // Indexed by midi. These a reference counted (so if multiple buttons activate the note, then that is tracked)
-  uint8_t playingNotes[2][127];
+  uint8_t mPlayingNotes[2][127];
 };
 
 // State can be copied and checked for changes
 struct State {
-  BellowsState bellowsState = BELLOWS_STATE_STATIONARY;
+  BellowsState mBellowsState = BELLOWS_STATE_STATIONARY;
 
   // Raw load cell data
-  long zeroLoadReading;
-  long loadReading;
+  long mZeroLoadReading;
+  long mLoadReading;
 
   // Pressures - converted using the gain
-  float pressure = 0.0f;
-  float absPressure = 0.0f;       // clamped to 0 and 1
-  float modifiedPressure = 0.0f;  // clamped to 0 and 1
+  float mPressure = 0.0f;
+  float mAbsPressure = 0.0f;       // clamped to 0 and 1
+  float mModifiedPressure = 0.0f;  // clamped to 0 and 1
 
-  int midiPans[2] = { -1, -1 };
-  int midiVolumes[2] = { -1, -1 };  // scaled to 0-127
-  int midiInstruments[2] = { 1, 1 };
+  int mMidiPans[2] = { -1, -1 };
+  int mMidiVolumes[2] = { -1, -1 };  // scaled to 0-127
+  int mMidiInstruments[2] = { 1, 1 };
 
-  int rotaryEncoderPosition = 0;
-  bool rotaryEncoderPressed = false;
-  uint32_t loopStartTimeMillis = 0;
+  int mRotaryEncoderPosition = 0;
+  bool mRotaryEncoderPressed = false;
+  uint32_t mLoopStartTimeMillis = 0;
 };
 
-extern BigState bigState;
-extern State state;
-extern State prevState;
+extern BigState gBigState;
+extern State gState;
+extern State gPrevState;
 
 #endif
