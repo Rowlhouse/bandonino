@@ -287,6 +287,15 @@ void initMenu() {
   // Not sure there's any merit to a blank page, since the display can be turned off by clicking
   // sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
 
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
+  sPages.back().mOptions.push_back(Option("Toggle", &actionToggleMetronome));
+  sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
+  sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
+  sPages.back().mOptions.push_back(Option("Volume", &gSettings.metronomeVolume, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Note 1", &gSettings.metronomeMidiNotePrimary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Note 2", &gSettings.metronomeMidiNoteSecondary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.metronomeMidiInstrument, 0, 127, 1, true));
+
   sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
 
   sPages.push_back(Page(Page::TYPE_PLAYING_STAFF, "", { Option(&actionToggleDisplay) }));
@@ -304,6 +313,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[LEFT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[LEFT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[LEFT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Off vel", &gSettings.noteOffVelocity[LEFT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[LEFT], -2, 2, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[LEFT], 0, 127, 1, true));
 
@@ -312,17 +322,9 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[RIGHT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[RIGHT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[RIGHT], 0, 127, 1, false));
+  sPages.back().mOptions.push_back(Option("Off vel", &gSettings.noteOffVelocity[RIGHT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[RIGHT], -2, 2, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], 0, 127, 1, true));
-
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
-  sPages.back().mOptions.push_back(Option("Toggle", &actionToggleMetronome));
-  sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
-  sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
-  sPages.back().mOptions.push_back(Option("Volume", &gSettings.metronomeVolume, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Note 1", &gSettings.metronomeMidiNotePrimary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Note 2", &gSettings.metronomeMidiNoteSecondary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.metronomeMidiInstrument, 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &gSettings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
@@ -339,7 +341,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
 
   // This isn't useful at the moment - may kill it
-  sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
+  // sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));
 
   gSettings.menuPageIndex = std::clamp(gSettings.menuPageIndex, 0, (int)(sPages.size() - 1));
 

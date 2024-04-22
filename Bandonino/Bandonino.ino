@@ -290,7 +290,7 @@ int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayo
 //====================================================================================================
 void playButtons(
   const byte activeKeys[], byte previousActiveKeys[], const int keyCount, const int midiChannel,
-  const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[], int velocity, int transpose) {
+  const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[], int velocity, int offVelocity, int transpose) {
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
       if (gState.mBellowsState != BELLOWS_STATE_STATIONARY) {
@@ -302,7 +302,7 @@ void playButtons(
       }
     } else if (!activeKeys[iKey] && previousActiveKeys[iKey]) {
       // Stop playing
-      stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), 0, midiChannel, playingNotes);
+      stopNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), offVelocity, midiChannel, playingNotes);
       previousActiveKeys[iKey] = activeKeys[iKey];
     }
   }
@@ -319,9 +319,10 @@ int getVelocity(int side) {
 void playAllButtons() {
   for (int side = 0; side != 2; ++side) {
     int velocity = getVelocity(side);
+    int offVelocity = gSettings.noteOffVelocity[side];
     int transpose = gSettings.transpose + gSettings.octave[side] * 12;
     playButtons(gBigState.activeKeys(side), gBigState.previousActiveKeys(side), PinInputs::keyCounts[side], gSettings.midiChannels[side],
-                gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side], velocity, transpose);
+                gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side], velocity, offVelocity, transpose);
   }
 }
 

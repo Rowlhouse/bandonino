@@ -26,6 +26,7 @@ struct Settings {
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressions[2] = {EXPRESSION_VOLUME, EXPRESSION_VOLUME};
   int maxVelocity[2] = {126, 126};
+  int noteOffVelocity[2] = {64, 64};
   int octave[2] = {0, 0}; // up/down in octaves, per side
   int transpose = 0; // in semitones
 
@@ -53,7 +54,7 @@ struct Settings {
   int menuBrightness = 12; // 0 to 0xf
   int noteDisplay = NOTE_DISPLAY_STACKED;
 
-  int  menuPageIndex = 0;
+  int  menuPageIndex = 1;
   bool menuDisplayEnabled = true;
 
   // Shape the pressure response using attack params. As percentages
