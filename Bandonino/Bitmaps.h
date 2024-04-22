@@ -1,6 +1,5 @@
 #ifndef BITMAPS_H
 #define BITMAPS_H
-//#include <Wire.h>
 #include <stdint.h>
 
 // https://mischianti.org/images-to-byte-array-online-converter-cpp-arduino/

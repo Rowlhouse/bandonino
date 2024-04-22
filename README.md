@@ -45,7 +45,8 @@ Teensy 4.1<br>
 https://www.amazon.co.uk/dp/B0BHFBY68Q?psc=1&ref=ppx_yo2ov_dt_b_product_details
 
 Gateron KS-9 RGB Mechanical MX Type Key Switch - Clear top (120 Pcs, Red)<br>
-https://www.amazon.co.uk/gp/product/B07X3T14CV/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1
+https://www.amazon.co.uk/gp/product/B07X3T14CV/ref=ppx_od_dt_b_asin_title_s00?ie=UTF8&psc=1<br>
+Note that these need to have the 1mm plastic lugs removed from the sides as they have to be placed very close to each other!
 
 Waveshare 1.5inch OLED Display Module 128x128 Pixels 16-bit Grey Level<br>
 https://www.amazon.co.uk/dp/B079NNZ9V1?psc=1&ref=ppx_yo2ov_dt_b_product_details
@@ -70,6 +71,17 @@ The menu system itself is not written to be a standalone system, but could easil
 The main loop runs at a solid 80Hz, keeping up with the load cell/amplifier. When using note display, updating the display as notes change can drop a frame or so, but this is inaudible.
 
 It supports writing/reading all the settings to an SD card - they can be saved explicitly, but also the current setting is saved automatically, and then restored when powering on.
+
+# Libraries/building
+
+I used/you'll need:
+
+* https://www.mathertel.de/Arduino/RotaryEncoderLibrary.aspx
+* https://github.com/bogde/HX711
+* https://github.com/adafruit/Adafruit_SSD1327 v 1.0.4
+* https://arduinojson.org/
+
+I think all of these are available through Aruino Sketch.
 
 # Videos/photos
 
