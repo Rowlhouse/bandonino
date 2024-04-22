@@ -304,7 +304,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[LEFT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[LEFT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[LEFT], 0, 127, 1, false));
-  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose[LEFT], -12, 12, 1));
+  sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[LEFT], -2, 2, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[LEFT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
@@ -312,7 +312,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[RIGHT], -100, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[RIGHT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[RIGHT], 0, 127, 1, false));
-  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose[RIGHT], -12, 12, 1));
+  sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[RIGHT], -2, 2, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], 0, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
@@ -326,6 +326,7 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &gSettings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Debounce", &gSettings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &gSettings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Note disp.", &gSettings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));

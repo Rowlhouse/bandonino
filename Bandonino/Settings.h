@@ -26,7 +26,8 @@ struct Settings {
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressions[2] = {EXPRESSION_VOLUME, EXPRESSION_VOLUME};
   int maxVelocity[2] = {126, 126};
-  int transpose[2] = {0, 0};
+  int octave[2] = {0, 0}; // up/down in octaves, per side
+  int transpose = 0; // in semitones
 
   int debounceTime = 0;  // milliseconds. Turns out not to be very helpful
 
@@ -50,7 +51,7 @@ struct Settings {
 
   int showFPS = 0;
   int menuBrightness = 12; // 0 to 0xf
-  int noteDisplay = 0;
+  int noteDisplay = NOTE_DISPLAY_STACKED;
 
   int  menuPageIndex = 0;
   bool menuDisplayEnabled = true;

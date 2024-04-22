@@ -88,8 +88,9 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(expressions[RIGHT]);
   WRITE_SETTING(maxVelocity[LEFT]);
   WRITE_SETTING(maxVelocity[RIGHT]);
-  WRITE_SETTING(transpose[LEFT]);
-  WRITE_SETTING(transpose[RIGHT]);
+  WRITE_SETTING(octave[LEFT]);
+  WRITE_SETTING(octave[RIGHT]);
+  WRITE_SETTING(transpose);
   WRITE_SETTING(pressureGain);
   WRITE_SETTING(debounceTime);
   WRITE_SETTING(midiChannels[LEFT]);
@@ -157,8 +158,9 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(expressions[RIGHT]);
   READ_SETTING(maxVelocity[LEFT]);
   READ_SETTING(maxVelocity[RIGHT]);
-  READ_SETTING(transpose[LEFT]);
-  READ_SETTING(transpose[RIGHT]);
+  READ_SETTING(octave[LEFT]);
+  READ_SETTING(octave[RIGHT]);
+  READ_SETTING(transpose);
   READ_SETTING(pressureGain);
   READ_SETTING(debounceTime);
   READ_SETTING(midiChannels[LEFT]);

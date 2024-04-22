@@ -83,6 +83,8 @@ I used/you'll need:
 
 I think all of these are available through Aruino Sketch.
 
+You'll need to select the board as Teensy 4.1 in Arduino Sketch, and USB type is Serial + MIDI
+
 # Videos/photos
 
 ## Playing video demo

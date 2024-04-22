@@ -319,8 +319,9 @@ int getVelocity(int side) {
 void playAllButtons() {
   for (int side = 0; side != 2; ++side) {
     int velocity = getVelocity(side);
+    int transpose = gSettings.transpose + gSettings.octave[side] * 12;
     playButtons(gBigState.activeKeys(side), gBigState.previousActiveKeys(side), PinInputs::keyCounts[side], gSettings.midiChannels[side],
-                gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side], velocity, gSettings.transpose[side]);
+                gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side], velocity, transpose);
   }
 }
 
