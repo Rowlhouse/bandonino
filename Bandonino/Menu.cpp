@@ -287,32 +287,23 @@ void initMenu() {
   // Not sure there's any merit to a blank page, since the display can be turned off by clicking
   // sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
 
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
-  sPages.back().mOptions.push_back(Option("Toggle", &actionToggleMetronome));
-  sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
-  sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
-  sPages.back().mOptions.push_back(Option("Volume", &gSettings.metronomeVolume, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Note 1", &gSettings.metronomeMidiNotePrimary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Note 2", &gSettings.metronomeMidiNoteSecondary, 1, 127, 1, true));
-  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.metronomeMidiInstrument, 0, 127, 1, true));
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Settings", {}));
+  sPages.back().mOptions.push_back(Option("Slot", &gSettings.slot, 0, 9, 1));
+  sPages.back().mOptions.push_back(Option("Save", &actionSaveSettings));
+  sPages.back().mOptions.push_back(Option("Load", &actionLoadSettings));
+  sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
 
   sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
 
   sPages.push_back(Page(Page::TYPE_PLAYING_STAFF, "", { Option(&actionToggleDisplay) }));
 
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Quick", {}));
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
-  sPages.back().mOptions.push_back(Option("Notes", &gSettings.accidentalPreference, gAccidentalPreferenceNames, 3));
   sPages.back().mOptions.push_back(Option("Key", &gSettings.accidentalKey, gKeyNames, NUM_KEYS));
-
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
-  sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
-  sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
-  sPages.back().mOptions.push_back(Option("Attack 25%", &gSettings.attack25, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Attack 50%", &gSettings.attack50, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Attack 75%", &gSettings.attack75, 0, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Press gain", &gSettings.pressureGain, 10, 200, 10, false));
+  sPages.back().mOptions.push_back(Option("Metronome", &actionToggleMetronome));
+  sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
+  sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
   sPages.back().mOptions.push_back(Option("Expression", &gSettings.expressions[LEFT], gExpressionNames, EXPRESSION_NUM));
@@ -332,18 +323,26 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[RIGHT], -2, 2, 1));
   sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], 0, 127, 1, true));
 
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
+  sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
+  sPages.back().mOptions.push_back(Option("Attack 25%", &gSettings.attack25, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 50%", &gSettings.attack50, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Attack 75%", &gSettings.attack75, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Press gain", &gSettings.pressureGain, 10, 200, 10, false));
+
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Metronome", {}));
+  sPages.back().mOptions.push_back(Option("Volume", &gSettings.metronomeVolume, 0, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Note 1", &gSettings.metronomeMidiNotePrimary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Note 2", &gSettings.metronomeMidiNoteSecondary, 1, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.metronomeMidiInstrument, 0, 127, 1, true));
+
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Misc", {}));
   sPages.back().mOptions.push_back(Option("Layout", &gSettings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
+  sPages.back().mOptions.push_back(Option("Notes", &gSettings.accidentalPreference, gAccidentalPreferenceNames, 3));
   sPages.back().mOptions.push_back(Option("Debounce", &gSettings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &gSettings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Note disp.", &gSettings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
   sPages.back().mOptions.push_back(Option("Toggle FPS", &actionShowFPS));
-
-  sPages.push_back(Page(Page::TYPE_OPTIONS, "Settings", {}));
-  sPages.back().mOptions.push_back(Option("Slot", &gSettings.slot, 0, 9, 1));
-  sPages.back().mOptions.push_back(Option("Save", &actionSaveSettings));
-  sPages.back().mOptions.push_back(Option("Load", &actionLoadSettings));
-  sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
 
   // This isn't useful at the moment - may kill it
   // sPages.push_back(Page(Page::TYPE_STATUS, "Status", { Option(Option(&actionToggleDisplay)) }));

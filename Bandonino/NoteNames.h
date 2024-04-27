@@ -41,11 +41,13 @@ enum Clef {
 struct NoteInfo {
   NoteInfo(int stavePosition = 0, int accidental = 0)
     : mStavePosition(stavePosition), mAccidental(accidental) {}
-  int mStavePosition;
-  int mAccidental;
-  // Name will be a string up to 4 characters long - note + octave + terminator
-  char mName[4] = { 'N', 'a', 'N', '\0' };
+  int mStavePosition = 0;
+  int mAccidental = 0;
+  int mNote = 0;
+  int mOctave = 0;
+  char mName[4] = {'\0'};
 };
-NoteInfo getNoteInfo(int midiNote, int clef, int accidentalPreference, int key);
+
+NoteInfo getNoteInfo(int midiNote, int clef, int accidentalPreference, int accidentalKey);
 
 #endif

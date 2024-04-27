@@ -57,7 +57,7 @@ struct Settings {
   int accidentalPreference = ACCIDENTAL_PREFERENCE_KEY;
   int accidentalKey = KEY_OFFSET;
 
-  int  menuPageIndex = 1;
+  int  menuPageIndex = 2;
   bool menuDisplayEnabled = true;
 
   // Shape the pressure response using attack params. As percentages
