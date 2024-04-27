@@ -83,16 +83,16 @@ I used/you'll need:
 
 I think all of these are available through Aruino Sketch. The full list of libraries is:
 
-RotaryEncoder at version 1.5.3 : [...]\Documents\Arduino\libraries\RotaryEncoder
-HX711 Arduino Library at version 0.7.5 : [...]\Documents\Arduino\libraries\HX711_Arduino_Library
-Adafruit SSD1327 at version 1.0.4 : [...]\Documents\Arduino\libraries\Adafruit_SSD1327
-Adafruit GFX Library at version 1.11.9 : [...]\Documents\Arduino\libraries\Adafruit_GFX_Library
-Adafruit BusIO at version 1.15.0 : [...]\Documents\Arduino\libraries\Adafruit_BusIO
-Wire at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire
-SPI at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SPI
-ArduinoJson at version 7.0.4 : [...]\Documents\Arduino\libraries\ArduinoJson
-SD at version 2.0.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SD
-SdFat at version 2.1.2 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SdFat
+    RotaryEncoder at version 1.5.3 : [...]\Documents\Arduino\libraries\RotaryEncoder
+    HX711 Arduino Library at version 0.7.5 : [...]\Documents\Arduino\libraries\HX711_Arduino_Library
+    Adafruit SSD1327 at version 1.0.4 : [...]\Documents\Arduino\libraries\Adafruit_SSD1327
+    Adafruit GFX Library at version 1.11.9 : [...]\Documents\Arduino\libraries\Adafruit_GFX_Library
+    Adafruit BusIO at version 1.15.0 : [...]\Documents\Arduino\libraries\Adafruit_BusIO
+    Wire at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire
+    SPI at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SPI
+    ArduinoJson at version 7.0.4 : [...]\Documents\Arduino\libraries\ArduinoJson
+    SD at version 2.0.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SD
+    SdFat at version 2.1.2 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SdFat
 
 You'll need to select the board as Teensy 4.1 in Arduino Sketch, and USB type is Serial + MIDI
 
