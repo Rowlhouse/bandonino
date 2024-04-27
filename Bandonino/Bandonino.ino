@@ -179,19 +179,19 @@ void updateBellows() {
     if (gState.mPressure == 0) {  //Bellows stopped
       gState.mBellowsState = BELLOWS_STATE_STATIONARY;
       if (gPrevState.mPressure != 0) {  //Bellows were not previously stopped
-        stopAllNotes();               //All Notes Off
+        stopAllNotes();                 //All Notes Off
       }
-    } else {                     //Bellows not stopped
+    } else {                       //Bellows not stopped
       if (gState.mPressure < 0) {  //Pull
         gState.mBellowsState = BELLOWS_STATE_OPENING;
         if (gPrevState.mPressure >= 0) {  //Pull and Previously Push or stopped
-          stopAllNotes();               //All Notes Off
+          stopAllNotes();                 //All Notes Off
         }
       }
       if (gState.mPressure > 0) {  //Push
         gState.mBellowsState = BELLOWS_STATE_CLOSING;
         if (gPrevState.mPressure <= 0) {  //Push and Previously Pull or stopped
-          stopAllNotes();               //All Notes Off
+          stopAllNotes();                 //All Notes Off
         }
       }
     }
@@ -296,7 +296,7 @@ void playButtons(
       if (gState.mBellowsState != BELLOWS_STATE_STATIONARY) {
         // Start playing, but only if there is some bellows action.
         playNote(getMidiNoteForKey(iKey, noteLayoutOpen, noteLayoutClose, transpose), velocity, midiChannel, playingNotes);
-        // Only update previous activity if there is bellows motion - otherwise pressing a key with 
+        // Only update previous activity if there is bellows motion - otherwise pressing a key with
         // the bellows stationary can result in losing the note.
         previousActiveKeys[iKey] = activeKeys[iKey];
       }
@@ -432,16 +432,22 @@ void hardwareTest() {
   if (showPlayingNotes) {
     Serial.print("Playing notes left: ");
     for (int i = gSettings.midiMin; i <= gSettings.midiMax; ++i) {
-      if (gBigState.mPlayingNotes[LEFT][i])
-        Serial.printf("%s ", midiNoteNames[i]);
+      if (gBigState.mPlayingNotes[LEFT][i]) {
+        NoteInfo noteInfo = getNoteInfo(
+          i, CLEF_TREBLE, gSettings.accidentalPreference, gSettings.accidentalKey);
+        Serial.printf("%s ", noteInfo.mName);
+      }
     }
     Serial.println();
     Serial.print("Playing notes right: ");
     for (int i = gSettings.midiMin; i <= gSettings.midiMax; ++i) {
-      if (gBigState.mPlayingNotes[RIGHT][i])
-        Serial.printf("%s ", midiNoteNames[i]);
+      if (gBigState.mPlayingNotes[RIGHT][i]) {
+        NoteInfo noteInfo = getNoteInfo(
+          i, CLEF_TREBLE, gSettings.accidentalPreference, gSettings.accidentalKey);
+        Serial.printf("%s ", noteInfo.mName);
+      }
+      Serial.println();
     }
-    Serial.println();
   }
 
   // Serial.println();

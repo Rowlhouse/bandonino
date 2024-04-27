@@ -21,7 +21,17 @@
 #define SKIPPED_KEY 0
 #define NOTE_BUTTON 0
 
-extern const char* midiNoteNames[];
+enum AccidentalPreference {
+  ACCIDENTAL_PREFERENCE_SHARP,
+  ACCIDENTAL_PREFERENCE_FLAT,
+  ACCIDENTAL_PREFERENCE_KEY
+};
+
+extern const char* gAccidentalPreferenceNames[];
+
+constexpr int NUM_KEYS = 11;
+constexpr int KEY_OFFSET = 5; // for middle C
+extern const char* gKeyNames[NUM_KEYS];
 
 enum Clef {
   CLEF_BASS,
@@ -33,7 +43,9 @@ struct NoteInfo {
     : mStavePosition(stavePosition), mAccidental(accidental) {}
   int mStavePosition;
   int mAccidental;
+  // Name will be a string up to 4 characters long - note + octave + terminator
+  char mName[4] = { 'N', 'a', 'N', '\0' };
 };
-NoteInfo getNoteInfo(int midiNote, int clef);
+NoteInfo getNoteInfo(int midiNote, int clef, int accidentalPreference, int key);
 
 #endif

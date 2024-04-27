@@ -1,10 +1,22 @@
+#include <algorithm>
 #include "NoteNames.h"
 
 #include <Wire.h>
 
+const char* gAccidentalPreferenceNames[] = {
+  "Sharp",
+  "Flat",
+  "Natural"
+};
+
+const char* gKeyNames[NUM_KEYS] = {
+  "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D", "A", "E", "B"
+};
+
+
 // See https://newt.phys.unsw.edu.au/jw/graphics/notesinvert.GIF
 
-const char* midiNoteNames[] = {
+const char* sMidiNoteNames[] = {
   "NaN",  // 0
   "NaN",
   "NaN",
@@ -139,40 +151,82 @@ const char* midiNoteNames[] = {
   "B9",
 };
 
-void getNoteOffset(int note, int& offset, int& accidental)
-{
+// Get the row based on the accidental (add on 5)
+// Going up from the key note, the note changes to have nice sharps and flats should be:
+// 2, 1, 2, 2, 2, 1, 2
+const char* sNoteNames[NUM_KEYS][12] = {
+  { "C", "Db", "D", "Eb", "Fb", "F", "Gb", "G", "Ab", "A", "Bb", "Cb" }, // -5 Db
+  { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "Cb" }, // -4 Ab
+  { "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B" }, // -3 Eb
+  { "C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B" }, // -2 Bb
+  { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B" }, // -1 F
+  { "C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B" }, // 0  C
+  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "Bb", "B" }, // 1  G
+  { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" }, // 2  D
+  { "C", "C#", "D", "D#", "E", "E#", "F#", "G", "G#", "A", "A#", "B" }, // 3  A
+  { "B#", "C#", "D", "D#", "E", "E#", "F#", "G", "G#", "A", "A#", "B" }, // 4  E
+  { "B#", "C#", "D", "D#", "E", "E#", "F#", "F+", "G#", "A", "A#", "B" }, // 5  B
+};
+
+const size_t NUM_MIDI_NOTE_NAMES = sizeof(sMidiNoteNames) / sizeof(sMidiNoteNames[0]);
+
+void getNoteOffset(int note, int& offset, int& accidental) {
   switch (note) {
     case 0:
-      offset = 0; accidental = 0;  break; // C
+      offset = 0;
+      accidental = 0;
+      break;  // C
     case 1:
-      offset = 0; accidental = 1;  break; // C#
+      offset = 0;
+      accidental = 1;
+      break;  // C#
     case 2:
-      offset = 1; accidental = 0;  break; // D
+      offset = 1;
+      accidental = 0;
+      break;  // D
     case 3:
-      offset = 2; accidental = -1;  break; // Eb
+      offset = 2;
+      accidental = -1;
+      break;  // Eb
     case 4:
-      offset = 2; accidental = 0;  break; // E
+      offset = 2;
+      accidental = 0;
+      break;  // E
     case 5:
-      offset = 3; accidental = 0;  break; // F
+      offset = 3;
+      accidental = 0;
+      break;  // F
     case 6:
-      offset = 3; accidental = 1;  break; // F#
+      offset = 3;
+      accidental = 1;
+      break;  // F#
     case 7:
-      offset = 4; accidental = 0;  break; // G
+      offset = 4;
+      accidental = 0;
+      break;  // G
     case 8:
-      offset = 4; accidental = 1;  break; // G#
+      offset = 4;
+      accidental = 1;
+      break;  // G#
     case 9:
-      offset = 5; accidental = 0;  break; // A
+      offset = 5;
+      accidental = 0;
+      break;  // A
     case 10:
-      offset = 6; accidental = -1;  break; // Bb
+      offset = 6;
+      accidental = -1;
+      break;  // Bb
     case 11:
-      offset = 6; accidental = 0;  break; // B
+      offset = 6;
+      accidental = 0;
+      break;  // B
     default:
-    break;
+      break;
   }
 }
 
 //====================================================================================================
-NoteInfo getNoteInfo(int midi, int clef) {
+NoteInfo getNoteInfo(int midi, int clef, int accidentalPreference, int accidentalKey) {
   NoteInfo result;
   int refMidi = (clef == CLEF_BASS) ? 43 : 64;
   int refNote = refMidi % 12;
@@ -189,5 +243,24 @@ NoteInfo getNoteInfo(int midi, int clef) {
   int height = offset + octave * 7;
 
   result.mStavePosition = height - refHeight;
+
+  if (accidentalPreference == ACCIDENTAL_PREFERENCE_SHARP)
+  {
+    snprintf(result.mName, 4, "%2s%1d", sNoteNames[7][note], octave);
+  }
+  else if (accidentalPreference == ACCIDENTAL_PREFERENCE_FLAT)
+  {
+    snprintf(result.mName, 4, "%2s%1d", sNoteNames[2][note], octave);
+  }
+  else
+  {
+    int row = std::clamp(accidentalKey, 0, NUM_KEYS);
+    snprintf(result.mName, 4, "%2s%1d", sNoteNames[row][note], octave);
+  }
+
+  // if (midi >= 0 && midi < NUM_MIDI_NOTE_NAMES) {
+  //   result.mName = sMidiNoteNames[midi];
+  // }
+
   return result;
 }

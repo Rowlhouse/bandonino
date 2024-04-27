@@ -2,6 +2,7 @@
 #define SETTINGS_H
 
 #include "NoteLayouts.h"
+#include "NoteNames.h"
 
 #include <stdint.h>
 
@@ -53,6 +54,8 @@ struct Settings {
   int showFPS = 0;
   int menuBrightness = 12; // 0 to 0xf
   int noteDisplay = NOTE_DISPLAY_STACKED;
+  int accidentalPreference = ACCIDENTAL_PREFERENCE_KEY;
+  int accidentalKey = KEY_OFFSET;
 
   int  menuPageIndex = 1;
   bool menuDisplayEnabled = true;

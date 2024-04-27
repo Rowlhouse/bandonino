@@ -9,8 +9,8 @@ Left/right sides emit midi on different channels so that they can be processed s
 
 # Goals
 
-1. To help me learn the keyboard
-2. To confirm my choice of keyboard
+1. To help me learn the keyboard layout
+2. To confirm my choice of layout (unisonoric - Peguri/Manoury layout)
 3. To provide a learning experience that is at least somewhat "musically satisfying", in order to help me wait for the real thing to arrive.
 4. To be a genuine, expressive, musical instrument, that goes beyond "press button, make sound", that might be interesting to use in situations where a real bandoneon isn't appropriate.
 
@@ -81,7 +81,18 @@ I used/you'll need:
 * https://github.com/adafruit/Adafruit_SSD1327 v 1.0.4
 * https://arduinojson.org/
 
-I think all of these are available through Aruino Sketch.
+I think all of these are available through Aruino Sketch. The full list of libraries is:
+
+RotaryEncoder at version 1.5.3 : [...]\Documents\Arduino\libraries\RotaryEncoder
+HX711 Arduino Library at version 0.7.5 : [...]\Documents\Arduino\libraries\HX711_Arduino_Library
+Adafruit SSD1327 at version 1.0.4 : [...]\Documents\Arduino\libraries\Adafruit_SSD1327
+Adafruit GFX Library at version 1.11.9 : [...]\Documents\Arduino\libraries\Adafruit_GFX_Library
+Adafruit BusIO at version 1.15.0 : [...]\Documents\Arduino\libraries\Adafruit_BusIO
+Wire at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\Wire
+SPI at version 1.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SPI
+ArduinoJson at version 7.0.4 : [...]\Documents\Arduino\libraries\ArduinoJson
+SD at version 2.0.0 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SD
+SdFat at version 2.1.2 : [...]\AppData\Local\Arduino15\packages\teensy\hardware\avr\1.59.0\libraries\SdFat
 
 You'll need to select the board as Teensy 4.1 in Arduino Sketch, and USB type is Serial + MIDI
 
@@ -89,7 +100,7 @@ You'll need to select the board as Teensy 4.1 in Arduino Sketch, and USB type is
 
 ## Playing video demo
 
-After trying to learn to play for four weeks: https://youtu.be/XA5RVsj3e9U?si=FQ6Nt5ClDMPxDO7N
+After learning to play for four weeks: https://youtu.be/XA5RVsj3e9U?si=FQ6Nt5ClDMPxDO7N
 
 The audio is recorded on my phone as midi, and mixed there (so this is exactly what I hear if I play with headphones).
 

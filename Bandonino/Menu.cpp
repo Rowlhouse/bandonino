@@ -300,6 +300,12 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_PLAYING_STAFF, "", { Option(&actionToggleDisplay) }));
 
+  sPages.push_back(Page(Page::TYPE_OPTIONS, "Quick", {}));
+  sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
+  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
+  sPages.back().mOptions.push_back(Option("Notes", &gSettings.accidentalPreference, gAccidentalPreferenceNames, 3));
+  sPages.back().mOptions.push_back(Option("Key", &gSettings.accidentalKey, gKeyNames, NUM_KEYS));
+
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
@@ -328,7 +334,6 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Layout", &gSettings.noteLayout, gNoteLayoutNames, NOTELAYOUTTYPE_NUM));
-  sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Debounce", &gSettings.debounceTime, 0, 50, 1));
   sPages.back().mOptions.push_back(Option("Brightness", &gSettings.menuBrightness, 4, 0xf, 1, false, &forceMenuRefresh));
   sPages.back().mOptions.push_back(Option("Note disp.", &gSettings.noteDisplay, gNoteDisplayNames, NOTE_DISPLAY_NUM));
@@ -419,7 +424,8 @@ void displayPlayingNotes(int side) {
         display.setCursor(col, convertToScreenY(y));
         prevPushed = false;
       }
-      display.printf("%-3s", midiNoteNames[note]);
+      NoteInfo noteInfo = getNoteInfo(note, CLEF_TREBLE, gSettings.accidentalPreference, gSettings.accidentalKey);
+      display.printf("%-3s", noteInfo.mName);
       prevY = y;
     }
     display.setTextColor(gSettings.menuBrightness, 0x0);
@@ -435,7 +441,8 @@ void displayPlayingNotes(int side) {
         break;
       display.setCursor(col, sPageY + row * sCharHeight * 2);
       if (i < notes.size()) {
-        display.printf("%-3s", midiNoteNames[notes[i]]);
+        NoteInfo noteInfo = getNoteInfo(notes[i], CLEF_TREBLE, gSettings.accidentalPreference, gSettings.accidentalKey);
+        display.printf("%-3s", noteInfo.mName);
       } else {
         display.printf("   ");
       }
@@ -597,7 +604,7 @@ void displayPlayingStaff(int side) {
   for (size_t iNote = 0; iNote != notes.size(); ++iNote) {
     int pushOffset = 0;
     int midiNote = notes[iNote];
-    NoteInfo noteInfo = getNoteInfo(midiNote, side);
+    NoteInfo noteInfo = getNoteInfo(midiNote, side, gSettings.accidentalPreference, gSettings.accidentalKey);
     if (prevNoteInfo.mStavePosition + 1 >= noteInfo.mStavePosition && !prevPushedSideways) {
       pushOffset = 6;
       prevPushedSideways = true;
@@ -613,8 +620,8 @@ void displayPlayingStaff(int side) {
   if (!notes.empty()) {
     int lowestMidi = notes.front();
     int highestMidi = notes.back();
-    NoteInfo lowestNoteInfo = getNoteInfo(lowestMidi, side);
-    NoteInfo highestNoteInfo = getNoteInfo(highestMidi, side);
+    NoteInfo lowestNoteInfo = getNoteInfo(lowestMidi, side, gSettings.accidentalPreference, gSettings.accidentalKey);
+    NoteInfo highestNoteInfo = getNoteInfo(highestMidi, side, gSettings.accidentalPreference, gSettings.accidentalKey);
     int requiredLines = -lowestNoteInfo.mStavePosition / 2;
     if (requiredLines > 0) {
       drawStaffLines(-requiredLines, -1, LEDGER_X[side], LEDGER_WIDTH, LEDGER_LINES_COLOUR, &area);
