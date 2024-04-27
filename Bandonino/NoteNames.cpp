@@ -88,8 +88,8 @@ NoteInfo getNoteInfo(int midi, int clef, int accidentalPreference, int accidenta
   int height = na.mNote + result.mOctave * 7;
   result.mAccidental = na.mAccidental;
 
-  Serial.printf("note = %d octave = %d, offset = %d, accidental = %d\n",
-                result.mNote, result.mOctave, offset, result.mAccidental);
+  // Serial.printf("note = %d octave = %d, offset = %d, accidental = %d\n",
+  //               result.mNote, result.mOctave, offset, result.mAccidental);
 
   result.mStavePosition = height - refHeight;
 

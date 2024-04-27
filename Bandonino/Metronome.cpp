@@ -47,18 +47,23 @@ void updateMetronome() {
     usbMIDI.sendNoteOff(gSettings.metronomeMidiNotePrimary, 0, gSettings.metronomeMidiChannel);
     usbMIDI.sendNoteOff(gSettings.metronomeMidiNoteSecondary, 0, gSettings.metronomeMidiChannel);
     sPlaying = false;
+    if (gSettings.metronomeLED)
+      analogWrite(LED_BUILTIN, 0);
   }
 
   if (time >= sNextBeatTime) {
-    int midiNote = (sNextBeat == 1) ? gSettings.metronomeMidiNotePrimary : gSettings.metronomeMidiNoteSecondary;
+    bool isMainBeat = (sNextBeat == 1 || gSettings.metronomeBeatsPerBar == 1);
+    int midiNote = isMainBeat ? gSettings.metronomeMidiNotePrimary : gSettings.metronomeMidiNoteSecondary;
     int midiVolume = convertPercentToMidi(gSettings.metronomeVolume);
     usbMIDI.sendControlChange(0x07, midiVolume, gSettings.metronomeMidiChannel);
     usbMIDI.sendNoteOn(midiNote, 127, gSettings.metronomeMidiChannel);
-    Serial.printf("Metronome beat %d\n", midiNote);
 
     float beatPeriod = 60.0f / gSettings.metronomeBeatsPerMinute;
     sNextBeatTime = time + (uint32_t)(beatPeriod * 1000);
     sNextStopTime = time + (uint32_t)(0.1f * beatPeriod * 1000);
+
+    if (gSettings.metronomeLED)
+      analogWrite(LED_BUILTIN, isMainBeat ? 256 : 32);
 
     sNextBeat = (sNextBeat + 1) % gSettings.metronomeBeatsPerBar;
     sPlaying = true;

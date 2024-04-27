@@ -44,6 +44,7 @@ struct Settings {
   int metronomeMidiNoteSecondary = 80;
   int metronomeMidiChannel = 3;
   int metronomeMidiInstrument = 115; // Appears to be woodblock
+  bool metronomeLED = true;
 
   // percentages between -100 and 100
   int pans[2] = {-25, 25};
