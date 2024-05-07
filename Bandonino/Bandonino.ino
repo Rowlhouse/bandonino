@@ -137,7 +137,9 @@ void loop() {
 
   updateMidi();
 
-  playAllButtons();
+  playAllKeys();
+
+  usbMIDI.send_now();
 
   updateMetronome();
 
@@ -222,6 +224,11 @@ void updateBellows() {
 
 //====================================================================================================
 void updateMidi() {
+  // MIDI Controllers should discard incoming MIDI messages.
+  while (usbMIDI.read()) {
+    // read & ignore incoming messages
+  }
+
   // Pan control (coarse). 0 is supposedly hard left, 64 center, 127 is hard right
   // That's weird, as it means there's a different range on left and right!
   for (int side = 0; side != 2; ++side) {
@@ -264,7 +271,7 @@ void stopNote(int midiNote, byte velocity, const int midiChannel, byte playingNo
 void stopAllNotes() {
   // Serial.println("All notes off");
   for (int side = 0; side != 2; ++side) {
-    usbMIDI.sendControlChange(0x7B, 0, gSettings.midiChannels[side]);
+    usbMIDI.sendControlChange(0x7B, 0, gSettings.midiChannels[side]);  // 123
     for (int iKey = 0; iKey != PinInputs::keyCounts[side]; ++iKey)
       gBigState.previousActiveKeys(side)[iKey] = 0;
     for (int midi = gSettings.midiMin; midi <= gSettings.midiMax; ++midi) {
@@ -288,9 +295,10 @@ int getMidiNoteForKey(int iKey, const byte* noteLayoutOpen, const byte* noteLayo
 }
 
 //====================================================================================================
-void playButtons(
+void playKeys(
   const byte activeKeys[], byte previousActiveKeys[], const int keyCount, const int midiChannel,
-  const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[], int velocity, int offVelocity, int transpose) {
+  const byte* noteLayoutOpen, const byte* noteLayoutClose, byte playingNotes[],
+  int velocity, int offVelocity, int transpose) {
   for (int iKey = 0; iKey != keyCount; ++iKey) {
     if (activeKeys[iKey] && !previousActiveKeys[iKey]) {
       if (gState.mBellowsState != BELLOWS_STATE_STATIONARY) {
@@ -316,13 +324,14 @@ int getVelocity(int side) {
 }
 
 //====================================================================================================
-void playAllButtons() {
+void playAllKeys() {
   for (int side = 0; side != 2; ++side) {
     int velocity = getVelocity(side);
     int offVelocity = gSettings.noteOffVelocity[side];
     int transpose = gSettings.transpose + gSettings.octave[side] * 12;
-    playButtons(gBigState.activeKeys(side), gBigState.previousActiveKeys(side), PinInputs::keyCounts[side], gSettings.midiChannels[side],
-                gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side], velocity, offVelocity, transpose);
+    playKeys(gBigState.activeKeys(side), gBigState.previousActiveKeys(side), PinInputs::keyCounts[side], gSettings.midiChannels[side],
+             gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side],
+             velocity, offVelocity, transpose);
   }
 }
 
@@ -364,7 +373,9 @@ void readKeys(const byte rowPins[], const byte columnPins[], byte activeKeys[], 
 //====================================================================================================
 void readAllKeys() {
   for (int side = 0; side != 2; ++side) {
-    readKeys(PinInputs::rowPins(side), PinInputs::columnPins(side), gBigState.activeKeys(side), gBigState.activeKeysTimes(side), PinInputs::rowCounts[side], PinInputs::columnCounts[side]);
+    readKeys(
+      PinInputs::rowPins(side), PinInputs::columnPins(side), gBigState.activeKeys(side),
+      gBigState.activeKeysTimes(side), PinInputs::rowCounts[side], PinInputs::columnCounts[side]);
   }
 }
 

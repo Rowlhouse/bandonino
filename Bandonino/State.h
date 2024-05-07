@@ -6,8 +6,7 @@
 
 struct Settings;
 
-enum BellowsState
-{
+enum BellowsState {
   BELLOWS_STATE_CLOSING = -1,
   BELLOWS_STATE_STATIONARY = 0,
   BELLOWS_STATE_OPENING = 1
@@ -30,6 +29,8 @@ struct BigState {
     return side ? mPreviousActiveKeysRight : mPreviousActiveKeysLeft;
   };
 
+  // This is set to the current time (ms) when the key is being pressed - so it's
+  // possible to tell how long ago it has been since the key was released.
   uint32_t mActiveKeysTimeLeft[PinInputs::keyCounts[LEFT]];
   uint32_t mActiveKeysTimeRight[PinInputs::keyCounts[RIGHT]];
   uint32_t* activeKeysTimes(int side) {

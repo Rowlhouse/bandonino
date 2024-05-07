@@ -53,13 +53,66 @@ https://www.amazon.co.uk/dp/B079NNZ9V1?psc=1&ref=ppx_yo2ov_dt_b_product_details
 
 Stemedu Load Cell 3KG Amplifier HX711<br>
 https://www.amazon.co.uk/dp/B07L82YWPV?psc=1&ref=ppx_yo2ov_dt_b_product_details<br>
-You need to switch (with delicate soldering!) the amp to use the 80Hz mode.
+You need to switch (with delicate soldering!) the amp to use the 80Hz mode. I broke mine so used this load cell with a different HX711 amplifier:
+https://www.amazon.co.uk/dp/B081JMSMXV
 
 1N4148 Diodes<br>
 https://www.amazon.co.uk/dp/B08TYC1ZRB?psc=1&ref=ppx_yo2ov_dt_b_product_details
 
 KY-040 360 Degree Rotary Encoder<br>
 https://www.amazon.co.uk/dp/B07B68H6R8?psc=1&ref=ppx_yo2ov_dt_b_product_details
+
+# Inputs
+
+| Input | Teensy Pin | Notes |
+| ----- | ---------- | ----- |
+| Left col 0 | 0 | |
+| Left col 1 | 2 | |
+| Left col 2 | 3 | |
+| Left col 3 | 4 | |
+| Left col 4 | 5 | |
+| |  |  |
+| Right col 0 | 6 | |
+| Right col 1 | 7 | |
+| Right col 2 | 8 | |
+| Right col 3 | 9 | |
+| Right col 4 | 10 | |
+| Right col 6 | 11 | |
+| |  |  |
+| Left row 0 | 32 | |
+| Left row 1 | 31 | |
+| Left row 2 | 30 | |
+| Left row 3 | 29 | |
+| Left row 4 | 28 | |
+| Left row 5 | 27 | |
+| Left row 6 | 26 | |
+| Left row 7 | 25 | |
+| |  |  |
+| Right row 0 | 33 | |
+| Right row 1 | 34 | |
+| Right row 2 | 35 | |
+| Right row 3 | 36 | |
+| Right row 4 | 37 | |
+| Right row 5 | 38 | |
+| Right row 6 | 39 | |
+| Right row 7 | 40 | |
+| Right row 8 | 41 | |
+| |  |  |
+| Load cell DT or DO/RX | 15 (A1) | From the strain guage to HX711 |
+| Load cell SCK or CK/TX | 16 (A2) | red->out+, white->A- green->A+ black->GND |
+| Load cell VCC | 5V | 5V seemed more reliable than 3.3 |
+| |  |  |
+| Rot encoder CLK | 22 | |
+| Rot encoder DT | 23 (A9) | |
+| Rot encoder SW | 17 | |
+| Rot encoder + | 3.3V | |
+| |  |  |
+| OLED I2C CLK | 19 (SCL) | Set jumpers BS1 = BS2 = 1 to enable I2C |
+| OLED I2C DIN | 18 (SDA) | |
+| OLED I2C VCC | 3.3V | |
+
+
+
 
 
 # Software
