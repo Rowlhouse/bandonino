@@ -156,6 +156,17 @@ void readPressure() {
 }
 
 //====================================================================================================
+void convertBalanceToLevels(int balance, int levels[2]) {
+  if (balance >= 0) {
+    levels[LEFT] = 100 - balance;
+    levels[RIGHT] = 100;
+  } else {
+    levels[LEFT] = 100;
+    levels[RIGHT] = 100 + balance;
+  }
+}
+
+//====================================================================================================
 void updateBellows() {
   if (gSettings.forceBellows == 0) {
     readPressure();
@@ -209,9 +220,12 @@ void updateBellows() {
     gState.mBellowsState = gSettings.forceBellows == 1 ? BELLOWS_STATE_OPENING : BELLOWS_STATE_CLOSING;
   }
 
+  int levels[2];
+  convertBalanceToLevels(gSettings.balance, levels);
+
   for (int side = 0; side != 2; ++side) {
     if (gSettings.expressions[side] == EXPRESSION_VOLUME) {
-      float volume = gState.mModifiedPressure * gSettings.levels[side] / 100.0f;
+      float volume = gState.mModifiedPressure * levels[side] / 100.0f;
       gState.mMidiVolumes[side] = std::min((int)(128 * volume), 127);
     } else {
       gState.mMidiVolumes[side] = 127;
@@ -229,10 +243,12 @@ void updateMidi() {
     // read & ignore incoming messages
   }
 
+  int pans[2] = { -gSettings.stereo, gSettings.stereo };
+
   // Pan control (coarse). 0 is supposedly hard left, 64 center, 127 is hard right
   // That's weird, as it means there's a different range on left and right!
   for (int side = 0; side != 2; ++side) {
-    gState.mMidiPans[side] = 64 + (gSettings.pans[side] * 63) / 100;
+    gState.mMidiPans[side] = 64 + (pans[side] * 63) / 100;
     if (gState.mMidiPans[side] != gPrevState.mMidiPans[side]) {
       usbMIDI.sendControlChange(10, gState.mMidiPans[side], gSettings.midiChannels[side]);
       if (gPrevState.mMidiPans[side] != SYNC_VALUE)
@@ -241,7 +257,7 @@ void updateMidi() {
 
     gState.mMidiInstruments[side] = gSettings.midiInstruments[side];
     if (gState.mMidiInstruments[side] != gPrevState.mMidiInstruments[side]) {
-      if (gState.mMidiInstruments[side] != 0)
+      if (gState.mMidiInstruments[side] != -1)
         usbMIDI.sendProgramChange(gState.mMidiInstruments[side], gSettings.midiChannels[side]);
     }
   }
@@ -320,7 +336,10 @@ void playKeys(
 int getVelocity(int side) {
   if (gSettings.expressions[side] == EXPRESSION_VOLUME)
     return gSettings.maxVelocity[side];
-  return convertFractionToMidi(gState.mModifiedPressure * (gSettings.levels[side] / 100.0f) * (gSettings.maxVelocity[side] / 127.0f));
+  int levels[2];
+  convertBalanceToLevels(gSettings.balance, levels);
+  return convertFractionToMidi(
+    gState.mModifiedPressure * (levels[side] / 100.0f) * (gSettings.maxVelocity[side] / 127.0f));
 }
 
 //====================================================================================================
@@ -329,8 +348,10 @@ void playAllKeys() {
     int velocity = getVelocity(side);
     int offVelocity = gSettings.noteOffVelocity[side];
     int transpose = gSettings.transpose + gSettings.octave[side] * 12;
-    playKeys(gBigState.activeKeys(side), gBigState.previousActiveKeys(side), PinInputs::keyCounts[side], gSettings.midiChannels[side],
-             gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side), gBigState.mPlayingNotes[side],
+    playKeys(gBigState.activeKeys(side), gBigState.previousActiveKeys(side),
+             PinInputs::keyCounts[side], gSettings.midiChannels[side],
+             gBigState.mNoteLayout.open(side), gBigState.mNoteLayout.close(side),
+             gBigState.mPlayingNotes[side],
              velocity, offVelocity, transpose);
   }
 }

@@ -205,6 +205,51 @@ void actionResetSettings() {
 }
 
 //====================================================================================================
+void actionLoadBandoneon() {
+  gSettings = Settings();
+  gSettings.midiInstruments[LEFT] = 0;
+  gSettings.midiInstruments[RIGHT] = 0;
+  gSettings.balance = 10;
+  gSettings.stereo = 50;
+  showMessage("Bandoneon", 500);
+}
+
+//====================================================================================================
+void actionLoadConcertina() {
+  gSettings = Settings();
+  gSettings.midiInstruments[LEFT] = 1;
+  gSettings.midiInstruments[RIGHT] = 1;
+  gSettings.balance = 0;
+  gSettings.stereo = 50;
+  showMessage("Bandoneon", 500);
+}
+
+//====================================================================================================
+void actionLoadPiano() {
+  gSettings = Settings();
+  gSettings.midiInstruments[LEFT] = 2;
+  gSettings.midiInstruments[RIGHT] = 2;
+  gSettings.expressions[LEFT] = EXPRESSION_VELOCITY;
+  gSettings.expressions[RIGHT] = EXPRESSION_VELOCITY;
+  gSettings.balance = 0;
+  gSettings.stereo = 0;
+  gSettings.debounceTime = 10;
+  showMessage("Piano", 500);
+}
+
+//====================================================================================================
+void actionLoadBandoPiano() {
+  gSettings = Settings();
+  gSettings.midiInstruments[LEFT] = 2;
+  gSettings.midiInstruments[RIGHT] = 0;
+  gSettings.expressions[LEFT] = EXPRESSION_VELOCITY;
+  gSettings.balance = -20;
+  gSettings.stereo = 25;
+  gSettings.debounceTime = 10;
+  showMessage("BandoPiano", 500);
+}
+
+//====================================================================================================
 void actionLoadSettings() {
   Serial.println("Load gSettings");
   char filename[32];
@@ -291,6 +336,10 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Slot", &gSettings.slot, 0, 9, 1));
   sPages.back().mOptions.push_back(Option("Save", &actionSaveSettings));
   sPages.back().mOptions.push_back(Option("Load", &actionLoadSettings));
+  sPages.back().mOptions.push_back(Option("Bandoneon", &actionLoadBandoneon));
+  sPages.back().mOptions.push_back(Option("Concertina", &actionLoadConcertina));
+  sPages.back().mOptions.push_back(Option("Piano", &actionLoadPiano));
+  sPages.back().mOptions.push_back(Option("BandoPiano", &actionLoadBandoPiano));
   sPages.back().mOptions.push_back(Option("Reset", &actionResetSettings));
 
   sPages.push_back(Page(Page::TYPE_PLAYING_NOTES, "Playing", { Option(&actionToggleDisplay) }));
@@ -301,27 +350,26 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
   sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Key", &gSettings.accidentalKey, gKeyNames, NUM_KEYS));
+  sPages.back().mOptions.push_back(Option("Stereo", &gSettings.stereo, -100, 100, 5, false));
+  sPages.back().mOptions.push_back(Option("Balance", &gSettings.balance, -100, 100, 5, false));
+
   sPages.back().mOptions.push_back(Option("Metronome", &actionToggleMetronome));
   sPages.back().mOptions.push_back(Option("Beats/min", &gSettings.metronomeBeatsPerMinute, 20, 200, 1, false));
   sPages.back().mOptions.push_back(Option("Beats/bar", &gSettings.metronomeBeatsPerBar, 1, 10, 1, false));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Left", {}));
   sPages.back().mOptions.push_back(Option("Expression", &gSettings.expressions[LEFT], gExpressionNames, EXPRESSION_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[LEFT], -100, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[LEFT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[LEFT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Off vel", &gSettings.noteOffVelocity[LEFT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[LEFT], -2, 2, 1));
-  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[LEFT], 0, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[LEFT], -1, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Right", {}));
   sPages.back().mOptions.push_back(Option("Expression", &gSettings.expressions[RIGHT], gExpressionNames, EXPRESSION_NUM));
-  sPages.back().mOptions.push_back(Option("Pan", &gSettings.pans[RIGHT], -100, 100, 5, false));
-  sPages.back().mOptions.push_back(Option("Volume", &gSettings.levels[RIGHT], 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Max vel", &gSettings.maxVelocity[RIGHT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Off vel", &gSettings.noteOffVelocity[RIGHT], 0, 127, 1, false));
   sPages.back().mOptions.push_back(Option("Octave", &gSettings.octave[RIGHT], -2, 2, 1));
-  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], 0, 127, 1, true));
+  sPages.back().mOptions.push_back(Option("Instrument", &gSettings.midiInstruments[RIGHT], -1, 127, 1, true));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));

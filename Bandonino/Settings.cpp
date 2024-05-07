@@ -108,10 +108,8 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(metronomeMidiChannel);
   WRITE_SETTING(metronomeMidiInstrument);
   WRITE_SETTING(metronomeLED);
-  WRITE_SETTING(pans[LEFT]);
-  WRITE_SETTING(pans[RIGHT]);
-  WRITE_SETTING(levels[LEFT]);
-  WRITE_SETTING(levels[RIGHT]);
+  WRITE_SETTING(stereo);
+  WRITE_SETTING(balance);
   WRITE_SETTING(showFPS);
   WRITE_SETTING(menuBrightness);
   WRITE_SETTING(noteDisplay);
@@ -183,10 +181,8 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(metronomeMidiChannel);
   READ_SETTING(metronomeMidiInstrument);
   READ_SETTING(metronomeLED);
-  READ_SETTING(pans[LEFT]);
-  READ_SETTING(pans[RIGHT]);
-  READ_SETTING(levels[LEFT]);
-  READ_SETTING(levels[RIGHT]);
+  READ_SETTING(stereo);
+  READ_SETTING(balance);
   READ_SETTING(showFPS);
   READ_SETTING(menuBrightness);
   READ_SETTING(noteDisplay);

@@ -34,7 +34,7 @@ struct Settings {
   int debounceTime = 0;  // milliseconds. Turns out not to be very helpful
 
   int midiChannels[2] = { 1, 2 };
-  int midiInstruments[2] = { 0, 0 };  // 0 means don't send - let the playback system decide
+  int midiInstruments[2] = { -1, -1 };  // -1 means don't send - let the playback system decide
 
   bool metronomeEnabled = false;
   int metronomeBeatsPerMinute = 100;
@@ -47,10 +47,15 @@ struct Settings {
   bool metronomeLED = true;
 
   // percentages between -100 and 100
-  int pans[2] = { -25, 25 };
+  // int pans[2] = { -25, 25 };
+
+  // 0 is mono. 100 is full left/right. -100 is right/left
+  int stereo = 50;
+  // 0 is equal treble/bass. 100 is treble only. -100 is bass only
+  int balance = 0;
 
   // Percentages between 0 and 100
-  int levels[2] = { 100, 100 };
+  // int levels[2] = { 100, 100 };
 
   int showFPS = 0;
   int menuBrightness = 12;  // 0 to 0xf
