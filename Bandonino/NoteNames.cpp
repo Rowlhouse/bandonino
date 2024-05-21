@@ -102,7 +102,7 @@ NoteInfo getNoteInfo(int midi, int clef, int accidentalPreference, int accidenta
     --wrappedOctave;
   }
   int row = std::clamp(accidentalKey, 0, NUM_KEYS);
-  snprintf(result.mName, 4, "%2s%1d", sNoteNames[row][wrappedNote], wrappedOctave);
+  snprintf(result.mName, 16, "%2s%1d", sNoteNames[row][wrappedNote], wrappedOctave);
 
   return result;
 }

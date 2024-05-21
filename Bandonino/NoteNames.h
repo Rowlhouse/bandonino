@@ -45,7 +45,7 @@ struct NoteInfo {
   int mAccidental = 0;
   int mNote = 0;
   int mOctave = 0;
-  char mName[4] = {'\0'};
+  char mName[16] = {'\0'};
 };
 
 NoteInfo getNoteInfo(int midiNote, int clef, int accidentalPreference, int accidentalKey);

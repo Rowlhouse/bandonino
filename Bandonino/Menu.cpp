@@ -2,6 +2,7 @@
 
 #include "Settings.h"
 #include "State.h"
+#include "Bellows.h"
 #include "NoteNames.h"
 #include "Bitmaps.h"
 
@@ -149,9 +150,27 @@ void showMessage(const char* msg, int time) {
 }
 
 //====================================================================================================
+void saveSettings() {
+  Serial.println("Writing gSettings to gSettings.json");
+  if (!gSettings.writeToCard())
+    Serial.println("Failed to write to gSettings.json");
+}
+
+//====================================================================================================
+void actionSaveSettings() {
+  Serial.println("Save gSettings");
+  char filename[32];
+  sprintf(filename, "Settings%02d.json", gSettings.slot);
+  if (!gSettings.writeToCard(filename))
+    Serial.printf("Failed to write gSettings to %s\n", filename);
+  else
+    showMessage("Saved", 500);
+}
+
+//====================================================================================================
 // Displays a little countdown prior to measuring the zero value
-void zeroBellows() {
-  Serial.println("Zero bellows");
+void resetBellows() {
+  Serial.println("Reset bellows");
   display.clearDisplay();
 
   display.setFont(sPageTitleFont);
@@ -167,35 +186,16 @@ void zeroBellows() {
     display.display();
     delay(500);
   }
-
   display.setTextSize(1);
   display.setTextColor(gSettings.menuBrightness, 0x0);
 
-  gState.mZeroLoadReading = gState.mLoadReading;
+  zeroBellows();
   forceMenuRefresh();
 }
 
 //====================================================================================================
-void actionZeroBellows() {
-  zeroBellows();
-}
-
-//====================================================================================================
-void saveSettings() {
-  Serial.println("Writing gSettings to gSettings.json");
-  if (!gSettings.writeToCard("gSettings.json"))
-    Serial.println("Failed to write to gSettings.json");
-}
-
-//====================================================================================================
-void actionSaveSettings() {
-  Serial.println("Save gSettings");
-  char filename[32];
-  sprintf(filename, "Settings%02d.json", gSettings.slot);
-  if (!gSettings.writeToCard(filename))
-    Serial.printf("Failed to write gSettings to %s\n", filename);
-  else
-    showMessage("Saved", 500);
+void actionResetBellows() {
+  resetBellows();
 }
 
 //====================================================================================================
@@ -325,10 +325,6 @@ void initMenu() {
   if (!display.begin(I2C_ADDRESS))
     Serial.println("Unable to initialize OLED");
 
-  Serial.println("Loading gSettings from gSettings.json");
-  if (!gSettings.readFromCard("gSettings.json"))
-    Serial.println("Failed to load gSettings");
-
   // Not sure there's any merit to a blank page, since the display can be turned off by clicking
   // sPages.push_back(Page(Page::TYPE_SPLASH, "Bandon.ino", { Option() }));
 
@@ -347,7 +343,7 @@ void initMenu() {
   sPages.push_back(Page(Page::TYPE_PLAYING_STAFF, "", { Option(&actionToggleDisplay) }));
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
-  sPages.back().mOptions.push_back(Option("Zero", &actionZeroBellows));
+  sPages.back().mOptions.push_back(Option("Zero", &actionResetBellows));
   sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Key", &gSettings.accidentalKey, gKeyNames, NUM_KEYS));
   sPages.back().mOptions.push_back(Option("Stereo", &gSettings.stereo, -100, 100, 5, false));

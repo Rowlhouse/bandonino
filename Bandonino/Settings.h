@@ -5,6 +5,7 @@
 #include "NoteNames.h"
 
 #include <stdint.h>
+#include <limits.h>
 
 enum Expression {
   EXPRESSION_VOLUME,
@@ -24,6 +25,7 @@ struct Settings {
   int slot;  // settings slot - e.g. 0 to 9
   int noteLayout = NOTELAYOUTTYPE_MANOURY2;
   int forceBellows = 0;    // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
+  long zeroLoadReading = LONG_MAX ; // Reasonable LONG_MAX means to measure
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressions[2] = { EXPRESSION_VOLUME, EXPRESSION_VOLUME };
   int maxVelocity[2] = { 126, 126 };
@@ -78,8 +80,8 @@ struct Settings {
   // Call this to limit the range of midi notes we traverse after changing the layout
   void updateMIDIRange();
 
-  bool writeToCard(const char* filename);
-  bool readFromCard(const char* filename);
+  bool writeToCard(const char* filename = "gSettings.json");
+  bool readFromCard(const char* filename = "gSettings.json");
 };
 
 extern Settings gSettings;

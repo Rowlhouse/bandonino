@@ -76,8 +76,8 @@ https://www.amazon.co.uk/dp/B07B68H6R8?psc=1&ref=ppx_yo2ov_dt_b_product_details
 | Right col 1 | 7 | |
 | Right col 2 | 8 | |
 | Right col 3 | 9 | |
-| Right col 4 | 10 | |
-| Right col 6 | 11 | |
+| Right col 4 | 20 | |
+| Right col 6 | 21 | |
 | |  |  |
 | Left row 0 | 32 | |
 | Left row 1 | 31 | |
@@ -111,8 +111,11 @@ https://www.amazon.co.uk/dp/B07B68H6R8?psc=1&ref=ppx_yo2ov_dt_b_product_details
 | OLED I2C DIN | 18 (SDA) | |
 | OLED I2C VCC | 3.3V | |
 
-
-
+Experiments with a BME280 pressure sensor:
+| BME280 CS | 10 | Using SPI |
+| BME280 MISO | 12 | |
+| BME280 SCK | 13 | |
+| BME280 MOSI | 11 | |
 
 
 # Software

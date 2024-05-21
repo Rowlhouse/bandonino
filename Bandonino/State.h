@@ -46,7 +46,6 @@ struct State {
   BellowsState mBellowsState = BELLOWS_STATE_STATIONARY;
 
   // Raw load cell data
-  long mZeroLoadReading;
   long mLoadReading;
 
   // Pressures - converted using the gain
@@ -61,6 +60,8 @@ struct State {
   int mRotaryEncoderPosition = 0;
   bool mRotaryEncoderPressed = false;
   uint32_t mLoopStartTimeMillis = 0;
+
+  void readPressure();
 };
 
 extern BigState gBigState;

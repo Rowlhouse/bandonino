@@ -1,9 +1,6 @@
 // https://www.mathertel.de/Arduino/RotaryEncoderLibrary.aspx
 #include <RotaryEncoder.h>
 
-// https://github.com/bogde/HX711
-#include <HX711.h>
-
 #include "NoteNames.h"
 #include "NoteLayouts.h"
 #include "PinInputs.h"
@@ -11,6 +8,7 @@
 #include "State.h"
 #include "Menu.h"
 #include "Metronome.h"
+#include "Bellows.h"
 
 // We don't have a State.cpp file, so put these here
 BigState gBigState;
@@ -35,11 +33,6 @@ RotaryEncoder rotaryEncoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::
 void tickRotaryEncoderISR() {
   rotaryEncoder.tick();  // just call tick() to check the gState.
 }
-
-//====================================================================================================
-HX711 loadcell;
-const long LOADCELL_OFFSET = 50682624;
-const long LOADCELL_DIVIDER = 5895655;
 
 unsigned long lastHardwareTestPrintTime;  // Rate limit printing of hardwareTest() info to serial monitor
 
@@ -72,6 +65,12 @@ inline int convertPercentToMidi(int percent) {
 void setup() {
   Serial.begin(38400);
 
+  Serial.println("========= Starting Bandon.ino ==========");
+
+  Serial.println("Loading gSettings from gSettings.json");
+  if (!gSettings.readFromCard())
+    Serial.println("Failed to load gSettings");
+
   syncNoteLayout();
 
   // Set pin modes - initially all LOW
@@ -86,14 +85,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(ROTARY_ENCODER_BUTTON_PIN, INPUT_PULLUP);
 
-  // Initialise the loadcell
-  loadcell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-
-  while (!loadcell.is_ready()) {
-  }
-  //Zero scale
-  gState.mZeroLoadReading = loadcell.read();
-  gState.mPressure = 0;
+  initBellows();
 
   attachInterrupt(digitalPinToInterrupt(ROTARY_PIN1), tickRotaryEncoderISR, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ROTARY_PIN2), tickRotaryEncoderISR, CHANGE);
@@ -133,7 +125,7 @@ void loop() {
 
   syncNoteLayout();
 
-  updateBellows();
+  updateVolumes();
 
   updateMidi();
 
@@ -148,14 +140,6 @@ void loop() {
 }
 
 //====================================================================================================
-void readPressure() {
-  while (!loadcell.is_ready()) {
-  }
-  gState.mLoadReading = loadcell.read();
-  gState.mPressure = -((gState.mLoadReading - gState.mZeroLoadReading) * (gSettings.pressureGain / 100.0f)) / 500000.0f;
-}
-
-//====================================================================================================
 void convertBalanceToLevels(int balance, int levels[2]) {
   if (balance >= 0) {
     levels[LEFT] = 100 - balance;
@@ -167,9 +151,9 @@ void convertBalanceToLevels(int balance, int levels[2]) {
 }
 
 //====================================================================================================
-void updateBellows() {
+void updateVolumes() {
   if (gSettings.forceBellows == 0) {
-    readPressure();
+    updateBellows();
 
     // Send the pressure to modulate volume
     gState.mAbsPressure = std::min(fabsf(gState.mPressure), 1.0f);  //Absolute Channel Pressure

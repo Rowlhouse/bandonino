@@ -84,6 +84,7 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(slot);
   WRITE_SETTING(noteLayout);
   WRITE_SETTING(forceBellows);
+  WRITE_SETTING(zeroLoadReading);
   WRITE_SETTING(expressions[LEFT]);
   WRITE_SETTING(expressions[RIGHT]);
   WRITE_SETTING(maxVelocity[LEFT]);
@@ -157,6 +158,7 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(slot);
   READ_SETTING(noteLayout);
   READ_SETTING(forceBellows);
+  READ_SETTING(zeroLoadReading);
   READ_SETTING(expressions[LEFT]);
   READ_SETTING(expressions[RIGHT]);
   READ_SETTING(maxVelocity[LEFT]);

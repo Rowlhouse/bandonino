@@ -8,7 +8,7 @@ static constexpr int rowCounts[2] = { 8, 8 };
 static constexpr int columnCounts[2] = { 5, 6 };
 
 static constexpr uint8_t columnPinsLeft[columnCounts[0]] = { 5, 4, 3, 2, 0 };
-static constexpr uint8_t columnPinsRight[columnCounts[1]] = { 11, 10, 9, 8, 7, 6 };
+static constexpr uint8_t columnPinsRight[columnCounts[1]] = { 21, 20, 9, 8, 7, 6 };
 static constexpr uint8_t rowPinsLeft[rowCounts[0]] = { 32, 31, 30, 29, 28, 27, 26, 25 };
 static constexpr uint8_t rowPinsRight[rowCounts[1]] = { 40, 39, 38, 37, 36, 35, 34, 33 };
 
