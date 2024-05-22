@@ -26,6 +26,7 @@ struct Settings {
   int noteLayout = NOTELAYOUTTYPE_MANOURY2;
   int forceBellows = 0;    // 1 means use opening. -1 means use closing. 0 means use the pressure sensor
   long zeroLoadReading = LONG_MAX ; // Reasonable LONG_MAX means to measure
+  int  zeroLoadOffset = 0; // Will be applied and then immediately zeroed
   int pressureGain = 100;  // Treat as percentage - but it can go above 100
   int expressions[2] = { EXPRESSION_VOLUME, EXPRESSION_VOLUME };
   int maxVelocity[2] = { 126, 126 };

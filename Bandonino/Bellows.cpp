@@ -39,6 +39,9 @@ void zeroBellows() {
 void updateBellows() {
   while (!loadcell.is_ready()) {
   }
+  const float loadScale = 500000.0f;
   gState.mLoadReading = loadcell.read();
+  gSettings.zeroLoadReading -= gSettings.zeroLoadOffset * loadScale / 100;
+  gSettings.zeroLoadOffset = 0;
   gState.mPressure = -((gState.mLoadReading - gSettings.zeroLoadReading) * (gSettings.pressureGain / 100.0f)) / 500000.0f;
 }

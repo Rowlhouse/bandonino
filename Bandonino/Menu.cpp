@@ -24,7 +24,7 @@ Adafruit_SSD1327 display(128, 128, &Wire, OLED_RESET, 4000000);
 // Note that fonts can be generated from https://oleddisplay.squix.ch/#/home
 #include "Fonts/FreeSans9pt7b.h"
 static const GFXfont* sPageTitleFont = &FreeSans9pt7b;
-static const int sCharWidth = 6; // 5 plus 1 for the space
+static const int sCharWidth = 6;  // 5 plus 1 for the space
 static const int sCharHeight = 8;
 
 // Screen size in the defautl character size
@@ -38,7 +38,7 @@ static const int sPageY = 16;
 static bool sForceMenuRefresh = false;
 
 //====================================================================================================
-// This is a bit hacky, overloading the constructors. Each entry should be customisable as it's 
+// This is a bit hacky, overloading the constructors. Each entry should be customisable as it's
 // added, with a clearer definition. Then we wouldn't need the type either.
 struct Option {
   typedef void (*Action)();
@@ -344,6 +344,7 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Options", {}));
   sPages.back().mOptions.push_back(Option("Zero", &actionResetBellows));
+  sPages.back().mOptions.push_back(Option("Offset", &gSettings.zeroLoadOffset, -1, 1, 1));
   sPages.back().mOptions.push_back(Option("Transpose", &gSettings.transpose, -12, 12, 1));
   sPages.back().mOptions.push_back(Option("Key", &gSettings.accidentalKey, gKeyNames, NUM_KEYS));
   sPages.back().mOptions.push_back(Option("Stereo", &gSettings.stereo, -100, 100, 5, false));
@@ -369,6 +370,8 @@ void initMenu() {
 
   sPages.push_back(Page(Page::TYPE_OPTIONS, "Bellows", {}));
   sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
+  sPages.back().mOptions.push_back(Option("Zero", &actionResetBellows));
+  sPages.back().mOptions.push_back(Option("Offset", &gSettings.zeroLoadOffset, -1, 1, 1));
   sPages.back().mOptions.push_back(Option("Attack 25%", &gSettings.attack25, 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Attack 50%", &gSettings.attack50, 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Attack 75%", &gSettings.attack75, 0, 100, 5, false));
@@ -473,7 +476,7 @@ void displayPlayingNotes(int side) {
     }
     display.setTextColor(gSettings.menuBrightness, 0x0);
   } else {
-    // Display notes by stacking them - this is OK, but notes will jump around and it's not 
+    // Display notes by stacking them - this is OK, but notes will jump around and it's not
     // always obvious whether it's high or low
     const int offset = 16;
     int col = side ? 127 - offset - 3 * 2 * sCharWidth : offset;
@@ -498,15 +501,18 @@ void displayPlayingNotes(int side) {
 }
 
 //====================================================================================================
-void displayAllPlayingNotes() {
-  displayPlayingNotes(LEFT);
-  displayPlayingNotes(RIGHT);
-
-  // Also display pressure
+void displayPressure() {
   display.setCursor(75, sPageY);
   static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
   display.printf("%s %3.2f", bellowsIndicators[gState.mBellowsState + 1], gState.mAbsPressure);
   display.display();
+}
+
+//====================================================================================================
+void displayAllPlayingNotes() {
+  displayPlayingNotes(LEFT);
+  displayPlayingNotes(RIGHT);
+  displayPressure();
 }
 
 const int STAFF_LINE_SPACING = 8;
@@ -682,12 +688,7 @@ void displayPlayingStaff(int side) {
 void displayPlayingStaffs() {
   displayPlayingStaff(LEFT);
   displayPlayingStaff(RIGHT);
-
-  // Also display pressure
-  display.setCursor(0, sPageY);
-  static const char* bellowsIndicators[3] = { ">||<", "=||=", "<||>" };
-  display.printf("%s %3.2f", bellowsIndicators[gState.mBellowsState + 1], gState.mAbsPressure);
-  display.display();
+  displayPressure();
 }
 
 //====================================================================================================
@@ -930,10 +931,14 @@ void updateMenu() {
           displayOption(gSettings.menuPageIndex, iOption, line + 2, false, false);
       }
     }
+    if (strcmp(page.mTitle, "Options") == 0 || strcmp(page.mTitle, "Bellows") == 0)
+      displayPressure();
     if (gSettings.showFPS)
       overlayFPS();
     display.display();
   } else {
+    if (strcmp(page.mTitle, "Options") == 0 || strcmp(page.mTitle, "Bellows") == 0)
+      displayPressure();
     if (gSettings.showFPS) {
       overlayFPS();
       display.display();
