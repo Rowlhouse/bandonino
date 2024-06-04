@@ -206,7 +206,7 @@ void actionResetSettings() {
 
 //====================================================================================================
 void actionLoadBandoneon() {
-  gSettings = Settings();
+  gSettings.reset();
   gSettings.midiInstruments[LEFT] = 0;
   gSettings.midiInstruments[RIGHT] = 0;
   gSettings.balance = 10;
@@ -216,7 +216,7 @@ void actionLoadBandoneon() {
 
 //====================================================================================================
 void actionLoadConcertina() {
-  gSettings = Settings();
+  gSettings.reset();
   gSettings.midiInstruments[LEFT] = 1;
   gSettings.midiInstruments[RIGHT] = 1;
   gSettings.balance = 0;
@@ -226,7 +226,7 @@ void actionLoadConcertina() {
 
 //====================================================================================================
 void actionLoadPiano() {
-  gSettings = Settings();
+  gSettings.reset();
   gSettings.midiInstruments[LEFT] = 2;
   gSettings.midiInstruments[RIGHT] = 2;
   gSettings.expressions[LEFT] = EXPRESSION_VELOCITY;
@@ -239,7 +239,7 @@ void actionLoadPiano() {
 
 //====================================================================================================
 void actionLoadBandoPiano() {
-  gSettings = Settings();
+  gSettings.reset();
   gSettings.midiInstruments[LEFT] = 2;
   gSettings.midiInstruments[RIGHT] = 0;
   gSettings.expressions[LEFT] = EXPRESSION_VELOCITY;

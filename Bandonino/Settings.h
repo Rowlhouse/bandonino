@@ -81,6 +81,9 @@ struct Settings {
   // Call this to limit the range of midi notes we traverse after changing the layout
   void updateMIDIRange();
 
+  // Sets everything to defaults EXCEPT the zero load reading is preserved
+  void reset();
+
   bool writeToCard(const char* filename = "gSettings.json");
   bool readFromCard(const char* filename = "gSettings.json");
 };

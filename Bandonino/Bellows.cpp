@@ -37,7 +37,12 @@ void zeroBellows() {
 
 //====================================================================================================
 void updateBellows() {
-  while (!loadcell.is_ready()) {
+
+  if (gSettings.zeroLoadReading == LONG_MAX) {
+    zeroBellows();
+  } else {
+    while (!loadcell.is_ready()) {
+    }
   }
   const float loadScale = 500000.0f;
   gState.mLoadReading = loadcell.read();

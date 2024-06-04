@@ -206,3 +206,10 @@ bool Settings::readFromCard(const char* filename) {
   Serial.printf("Settings read from %s\n", filename);
   return true;
 }
+
+//====================================================================================================
+void Settings::reset() {
+  auto origSettings = *this;
+  *this = Settings();
+  zeroLoadReading = origSettings.zeroLoadReading;
+}
