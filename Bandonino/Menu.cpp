@@ -372,6 +372,7 @@ void initMenu() {
   sPages.back().mOptions.push_back(Option("Bellows", &gSettings.forceBellows, sForceBellowsStrings, 3));
   sPages.back().mOptions.push_back(Option("Zero", &actionResetBellows));
   sPages.back().mOptions.push_back(Option("Offset", &gSettings.zeroLoadOffset, -1, 1, 1));
+  sPages.back().mOptions.push_back(Option("Dead zone", &gSettings.deadzone, 0, 50, 1, false));
   sPages.back().mOptions.push_back(Option("Attack 25%", &gSettings.attack25, 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Attack 50%", &gSettings.attack50, 0, 100, 5, false));
   sPages.back().mOptions.push_back(Option("Attack 75%", &gSettings.attack75, 0, 100, 5, false));

@@ -118,6 +118,7 @@ bool Settings::writeToCard(const char* filename) {
   WRITE_SETTING(accidentalKey);
   WRITE_SETTING(menuPageIndex);
   WRITE_SETTING(menuDisplayEnabled);
+  WRITE_SETTING(deadzone);
   WRITE_SETTING(attack25);
   WRITE_SETTING(attack50);
   WRITE_SETTING(attack75);
@@ -192,6 +193,7 @@ bool Settings::readFromCard(const char* filename) {
   READ_SETTING(accidentalKey);
   READ_SETTING(menuPageIndex);
   READ_SETTING(menuDisplayEnabled);
+  READ_SETTING(deadzone);
   READ_SETTING(attack25);
   READ_SETTING(attack50);
   READ_SETTING(attack75);

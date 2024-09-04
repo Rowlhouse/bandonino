@@ -158,24 +158,27 @@ void updateVolumes() {
     // Send the pressure to modulate volume
     gState.mAbsPressure = std::min(fabsf(gState.mPressure), 1.0f);  //Absolute Channel Pressure
 
+    float deadzone = gSettings.deadzone / 100.0f;
+    float cleanAbsPressure = std::max((gState.mAbsPressure - deadzone) / (1.0f - deadzone), 0.0f);
+
     float a25 = gSettings.attack25 / 100.0f;
     float a50 = gSettings.attack50 / 100.0f;
     float a75 = gSettings.attack75 / 100.0f;
 
-    if (gState.mAbsPressure < 0.25f) {
-      gState.mModifiedPressure = (gState.mAbsPressure * a25) / 0.25f;
-    } else if (gState.mAbsPressure < 0.5f) {
-      gState.mModifiedPressure = a25 + ((gState.mAbsPressure - 0.25f) * (a50 - a25)) / 0.25f;
-    } else if (gState.mAbsPressure < 0.75f) {
-      gState.mModifiedPressure = a50 + ((gState.mAbsPressure - 0.5f) * (a75 - a50)) / 0.25f;
+    if (cleanAbsPressure < 0.25f) {
+      gState.mModifiedPressure = (cleanAbsPressure * a25) / 0.25f;
+    } else if (cleanAbsPressure < 0.5f) {
+      gState.mModifiedPressure = a25 + ((cleanAbsPressure - 0.25f) * (a50 - a25)) / 0.25f;
+    } else if (cleanAbsPressure < 0.75f) {
+      gState.mModifiedPressure = a50 + ((cleanAbsPressure - 0.5f) * (a75 - a50)) / 0.25f;
     } else {
-      gState.mModifiedPressure = a75 + ((gState.mAbsPressure - 0.75f) * (1.0f - a75)) / 0.25f;
+      gState.mModifiedPressure = a75 + ((cleanAbsPressure - 0.75f) * (1.0f - a75)) / 0.25f;
     }
 
     // Handle bellows reversals
-    if (gState.mPressure == 0) {  //Bellows stopped
+    if (gState.mModifiedPressure == 0) {  //Bellows stopped
       gState.mBellowsState = BELLOWS_STATE_STATIONARY;
-      if (gPrevState.mPressure != 0) {  //Bellows were not previously stopped
+      if (gPrevState.mModifiedPressure != 0) {  //Bellows were not previously stopped
         stopAllNotes();                 //All Notes Off
       }
     } else {                       //Bellows not stopped
